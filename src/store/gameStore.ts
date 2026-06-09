@@ -18,9 +18,12 @@ const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 export const STAFF_NAMES_FIRST = ["Budi","Dewi","Hendra","Siti","Agus","Rina","Joko","Maya","Doni","Lestari","Fajar","Intan","Rudi","Citra","Bagas"];
 export const STAFF_NAMES_LAST  = ["S.","R.","K.","N.","P.","W.","H.","L.","F.","A."];
 
+// Start from Date.now() so IDs never collide across page reloads; each ++_staffSeq is a unique integer
+let _staffSeq = Date.now();
+
 export function genStaff(role: Staff["role"]): Staff {
   return {
-    id: Date.now() + Math.random(),
+    id: ++_staffSeq,
     name: pick(STAFF_NAMES_FIRST) + " " + pick(STAFF_NAMES_LAST),
     role, skill: rnd(3,9), speed: rnd(3,9), loyalty: rnd(4,10),
     workload: 0, morale: rnd(60,90), exp: 0,
