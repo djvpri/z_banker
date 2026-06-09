@@ -28,144 +28,157 @@ export default async function LeaderboardPage() {
   });
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#080810",
-      color: "#e0e0e0", fontFamily: "'Segoe UI', sans-serif",
-      padding: "24px 16px", maxWidth: 720, margin: "0 auto",
-    }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
-        <div>
-          <Link href="/dashboard" style={{ color: "#555", fontSize: 12, textDecoration: "none" }}>← Kembali ke Game</Link>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#c8a96e", marginTop: 4, marginBottom: 2 }}>
-            🏆 Leaderboard Global
-          </h1>
-          <p style={{ fontSize: 11, color: "#444", margin: 0 }}>Skor disubmit otomatis saat menang · Top 50</p>
-        </div>
-        {session && (
-          <span style={{ fontSize: 11, color: "#555", background: "#0e0e18", padding: "6px 12px", borderRadius: 8, border: "1px solid #1a1a2e" }}>
-            👤 {session.user.name}
-          </span>
-        )}
-      </div>
+    <>
+      <style>{`
+        .lb-wrap { min-height:100vh; background:#080810; color:#e0e0e0; font-family:'Segoe UI',sans-serif; padding:24px 16px; max-width:720px; margin:0 auto; }
+        .lb-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:28px; }
+        .lb-legend { display:flex; gap:16px; margin-bottom:16px; font-size:10px; color:#555; background:#0e0e18; border-radius:10px; padding:8px 14px; border:1px solid #1a1a2e; flex-wrap:wrap; }
 
-      {/* Legend */}
-      <div style={{
-        display: "flex", gap: 16, marginBottom: 16, fontSize: 10, color: "#555",
-        background: "#0e0e18", borderRadius: 10, padding: "8px 14px",
-        border: "1px solid #1a1a2e", flexWrap: "wrap",
-      }}>
-        <span>⚡ <b style={{ color: "#f59e0b" }}>Efisiensi</b> = Profit ÷ Hari (lebih tinggi = lebih cepat menang)</span>
-        <span>📉 <b style={{ color: "#60a5fa" }}>NPL</b> = Non-Performing Loan (lebih rendah lebih baik)</span>
-        <span>⭐ <b style={{ color: "#a78bfa" }}>Rep</b> = Reputasi Bank</span>
-      </div>
+        /* Desktop table */
+        .lb-thead { display:grid; grid-template-columns:36px 1fr 130px 90px 54px 46px 58px; gap:6px; padding:8px 14px; background:#0d0d14; border-radius:10px 10px 0 0; border:1px solid #1a1a2e; border-bottom:none; font-size:9px; color:#555; text-transform:uppercase; letter-spacing:1px; }
+        .lb-tbody { border:1px solid #1a1a2e; border-radius:0 0 14px 14px; overflow:hidden; }
+        .lb-row { display:grid; grid-template-columns:36px 1fr 130px 90px 54px 46px 58px; gap:6px; padding:10px 14px; border-bottom:1px solid #1a1a2e; align-items:center; }
+        .lb-row:last-child { border-bottom:none; }
 
-      {/* Table header */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "36px 1fr 130px 90px 54px 46px 58px",
-        gap: 6, padding: "8px 14px",
-        background: "#0d0d14", borderRadius: "10px 10px 0 0",
-        border: "1px solid #1a1a2e", borderBottom: "none",
-        fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: 1,
-      }}>
-        <span>#</span>
-        <span>Pemain &amp; Bank</span>
-        <span style={{ textAlign: "right" }}>Total Profit</span>
-        <span style={{ textAlign: "right" }}>Efisiensi</span>
-        <span style={{ textAlign: "center" }}>NPL</span>
-        <span style={{ textAlign: "center" }}>Rep</span>
-        <span style={{ textAlign: "center" }}>Level</span>
-      </div>
+        /* Mobile: hide table layout, show cards */
+        .lb-col-profit, .lb-col-eff, .lb-col-npl, .lb-col-rep, .lb-col-lv { display:block; }
+        .lb-card-stats { display:none; }
 
-      {/* Entries */}
-      <div style={{ border: "1px solid #1a1a2e", borderRadius: "0 0 14px 14px", overflow: "hidden" }}>
-        {entries.map((entry, i) => {
-          const isMe = session?.user?.email === entry.user?.email;
-          const profit = Number(entry.totalProfit);
-          const eff = Math.round(profit / Math.max(entry.day, 1));
-          const npl = (entry as any).npl ?? 0;
-          const rep = (entry as any).reputation ?? 0;
-          const bankName = (entry as any).bankName || "Bank Nusantara";
-          const nplColor = npl <= 3 ? "#22c55e" : npl <= 5 ? "#f59e0b" : "#ef4444";
-          const repColor = rep >= 70 ? "#22c55e" : rep >= 40 ? "#f59e0b" : "#ef4444";
-          const dc = DIFF_COLOR[entry.difficulty] || "#aaa";
+        @media (max-width: 599px) {
+          .lb-thead { display:none; }
+          .lb-row { grid-template-columns:36px 1fr; grid-template-rows:auto auto; column-gap:8px; row-gap:0; padding:10px 12px; }
+          .lb-col-profit { display:none; }
+          .lb-col-eff    { display:none; }
+          .lb-col-npl    { display:none; }
+          .lb-col-rep    { display:none; }
+          .lb-col-lv     { display:none; }
+          .lb-card-stats { display:flex; flex-wrap:wrap; gap:6px; margin-top:5px; font-size:10px; grid-column:2; }
+        }
+      `}</style>
 
-          return (
-            <div key={entry.id} style={{
-              display: "grid",
-              gridTemplateColumns: "36px 1fr 130px 90px 54px 46px 58px",
-              gap: 6, padding: "10px 14px",
-              borderBottom: "1px solid #1a1a2e",
-              background: isMe ? "rgba(200,169,110,0.06)" : i % 2 === 0 ? "#0e0e18" : "#0b0b14",
-              alignItems: "center",
-            }}>
-              {/* Rank */}
-              <span style={{ fontSize: i < 3 ? 16 : 12, textAlign: "center", color: i < 3 ? undefined : "#555", fontWeight: 700 }}>
-                {i < 3 ? MEDALS[i] : i + 1}
-              </span>
-
-              {/* Pemain + Bank */}
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 12, color: isMe ? "#c8a96e" : "#ddd", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {entry.playerName}{isMe ? " 👈" : ""}
-                </div>
-                <div style={{ fontSize: 10, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  🏦 {bankName} ·{" "}
-                  <span style={{ color: dc }}>{DIFF_LABEL[entry.difficulty] || entry.difficulty}</span>
-                  {" · Hari "}{entry.day}
-                </div>
-              </div>
-
-              {/* Total Profit */}
-              <div style={{ textAlign: "right", fontFamily: "monospace", color: "#22c55e", fontSize: 12, fontWeight: 700 }}>
-                {fmt(profit)}
-              </div>
-
-              {/* Efisiensi */}
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontFamily: "monospace", fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>
-                  {fmt(eff)}
-                </div>
-                <div style={{ fontSize: 9, color: "#444" }}>/hari</div>
-              </div>
-
-              {/* NPL */}
-              <div style={{ textAlign: "center", fontFamily: "monospace", fontSize: 11, color: nplColor, fontWeight: 700 }}>
-                {npl > 0 ? npl.toFixed(1) + "%" : "—"}
-              </div>
-
-              {/* Reputasi */}
-              <div style={{ textAlign: "center", fontFamily: "monospace", fontSize: 11, color: repColor, fontWeight: 700 }}>
-                {rep > 0 ? rep + "%" : "—"}
-              </div>
-
-              {/* Level */}
-              <div style={{ textAlign: "center" }}>
-                <span style={{
-                  fontSize: 10, fontWeight: 700,
-                  color: dc, background: dc + "18",
-                  padding: "2px 7px", borderRadius: 5,
-                }}>
-                  Lv.{entry.level}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-
-        {entries.length === 0 && (
-          <div style={{ padding: 48, textAlign: "center", color: "#444", background: "#0e0e18" }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>🏆</div>
-            <div style={{ fontWeight: 700, color: "#555" }}>Belum ada skor.</div>
-            <div style={{ fontSize: 11, color: "#333", marginTop: 4 }}>Jadilah yang pertama menang dan masuk leaderboard!</div>
+      <div className="lb-wrap">
+        {/* Header */}
+        <div className="lb-header">
+          <div>
+            <Link href="/dashboard" style={{ color: "#555", fontSize: 12, textDecoration: "none" }}>← Kembali ke Game</Link>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#c8a96e", marginTop: 4, marginBottom: 2 }}>
+              🏆 Leaderboard Global
+            </h1>
+            <p style={{ fontSize: 11, color: "#444", margin: 0 }}>Skor disubmit otomatis saat menang · Top 50</p>
           </div>
-        )}
-      </div>
+          {session && (
+            <span style={{ fontSize: 11, color: "#555", background: "#0e0e18", padding: "6px 12px", borderRadius: 8, border: "1px solid #1a1a2e", whiteSpace: "nowrap" }}>
+              👤 {session.user.name}
+            </span>
+          )}
+        </div>
 
-      <p style={{ textAlign: "center", color: "#2a2a3a", fontSize: 10, marginTop: 16 }}>
-        Skor disubmit otomatis saat menang · Data diperbarui real-time
-      </p>
-    </div>
+        {/* Legend */}
+        <div className="lb-legend">
+          <span>⚡ <b style={{ color: "#f59e0b" }}>Efisiensi</b> = Profit ÷ Hari</span>
+          <span>📉 <b style={{ color: "#60a5fa" }}>NPL</b> = Non-Performing Loan (rendah = bagus)</span>
+          <span>⭐ <b style={{ color: "#a78bfa" }}>Rep</b> = Reputasi Bank</span>
+        </div>
+
+        {/* Table header (desktop only) */}
+        <div className="lb-thead">
+          <span>#</span>
+          <span>Pemain &amp; Bank</span>
+          <span style={{ textAlign: "right" }}>Total Profit</span>
+          <span style={{ textAlign: "right" }}>Efisiensi</span>
+          <span style={{ textAlign: "center" }}>NPL</span>
+          <span style={{ textAlign: "center" }}>Rep</span>
+          <span style={{ textAlign: "center" }}>Level</span>
+        </div>
+
+        {/* Entries */}
+        <div className="lb-tbody">
+          {entries.map((entry, i) => {
+            const isMe = session?.user?.email === entry.user?.email;
+            const profit = Number(entry.totalProfit);
+            const eff = Math.round(profit / Math.max(entry.day, 1));
+            const npl = (entry as any).npl ?? 0;
+            const rep = (entry as any).reputation ?? 0;
+            const bankName = (entry as any).bankName || "Bank Nusantara";
+            const nplColor = npl <= 3 ? "#22c55e" : npl <= 5 ? "#f59e0b" : "#ef4444";
+            const repColor = rep >= 70 ? "#22c55e" : rep >= 40 ? "#f59e0b" : "#ef4444";
+            const dc = DIFF_COLOR[entry.difficulty] || "#aaa";
+
+            return (
+              <div key={entry.id} className="lb-row" style={{
+                background: isMe ? "rgba(200,169,110,0.06)" : i % 2 === 0 ? "#0e0e18" : "#0b0b14",
+              }}>
+                {/* Rank */}
+                <span style={{ fontSize: i < 3 ? 16 : 12, textAlign: "center", color: i < 3 ? undefined : "#555", fontWeight: 700 }}>
+                  {i < 3 ? MEDALS[i] : i + 1}
+                </span>
+
+                {/* Pemain + Bank */}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, color: isMe ? "#c8a96e" : "#ddd", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {entry.playerName}{isMe ? " 👈" : ""}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    🏦 {bankName} ·{" "}
+                    <span style={{ color: dc }}>{DIFF_LABEL[entry.difficulty] || entry.difficulty}</span>
+                    {" · Hari "}{entry.day}
+                  </div>
+
+                  {/* Mobile stats row */}
+                  <div className="lb-card-stats">
+                    <span style={{ color: "#22c55e", fontFamily: "monospace", fontWeight: 700 }}>{fmt(profit)}</span>
+                    <span style={{ color: "#333" }}>·</span>
+                    <span style={{ color: "#f59e0b", fontFamily: "monospace" }}>⚡{fmt(eff)}/hr</span>
+                    {npl > 0 && <><span style={{ color: "#333" }}>·</span><span style={{ color: nplColor }}>NPL {npl.toFixed(1)}%</span></>}
+                    {rep > 0 && <><span style={{ color: "#333" }}>·</span><span style={{ color: repColor }}>Rep {rep}%</span></>}
+                    <span style={{ color: dc, background: dc + "18", padding: "1px 6px", borderRadius: 4, fontWeight: 700 }}>Lv.{entry.level}</span>
+                  </div>
+                </div>
+
+                {/* Total Profit (desktop) */}
+                <div className="lb-col-profit" style={{ textAlign: "right", fontFamily: "monospace", color: "#22c55e", fontSize: 12, fontWeight: 700 }}>
+                  {fmt(profit)}
+                </div>
+
+                {/* Efisiensi (desktop) */}
+                <div className="lb-col-eff" style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: "monospace", fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>{fmt(eff)}</div>
+                  <div style={{ fontSize: 9, color: "#444" }}>/hari</div>
+                </div>
+
+                {/* NPL (desktop) */}
+                <div className="lb-col-npl" style={{ textAlign: "center", fontFamily: "monospace", fontSize: 11, color: nplColor, fontWeight: 700 }}>
+                  {npl > 0 ? npl.toFixed(1) + "%" : "—"}
+                </div>
+
+                {/* Reputasi (desktop) */}
+                <div className="lb-col-rep" style={{ textAlign: "center", fontFamily: "monospace", fontSize: 11, color: repColor, fontWeight: 700 }}>
+                  {rep > 0 ? rep + "%" : "—"}
+                </div>
+
+                {/* Level (desktop) */}
+                <div className="lb-col-lv" style={{ textAlign: "center" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: dc, background: dc + "18", padding: "2px 7px", borderRadius: 5 }}>
+                    Lv.{entry.level}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+
+          {entries.length === 0 && (
+            <div style={{ padding: 48, textAlign: "center", color: "#444", background: "#0e0e18" }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>🏆</div>
+              <div style={{ fontWeight: 700, color: "#555" }}>Belum ada skor.</div>
+              <div style={{ fontSize: 11, color: "#333", marginTop: 4 }}>Jadilah yang pertama menang dan masuk leaderboard!</div>
+            </div>
+          )}
+        </div>
+
+        <p style={{ textAlign: "center", color: "#2a2a3a", fontSize: 10, marginTop: 16 }}>
+          Skor disubmit otomatis saat menang · Data diperbarui real-time
+        </p>
+      </div>
+    </>
   );
 }
