@@ -473,6 +473,7 @@ export function useGameActions() {
     handleTrain, handlePromote, handleRest, handleFire, handleFraud, handleHire,
     handleApproach, handleConvert, handleDismissProspect,
     handleInvest, handleWithdrawInvest,
-    handleUpgradeBranch,
+    handleUpgradeBranch, handleExpand, handleAcquire,
+    handleStressTest, handleToggleLps, handleBmpkCheck, handleUnlockProduct,
   };
 }
