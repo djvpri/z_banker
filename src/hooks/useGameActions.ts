@@ -356,8 +356,9 @@ export function useGameActions() {
     if (game.branch < 2) { addNotif("❌ Perlu Kantor Pusat untuk ekspansi kota baru!", "danger"); return; }
     if (game.cash < city.cost) { addNotif("❌ Kas tidak cukup untuk buka cabang di " + city.name + "!", "danger"); return; }
     if (branches.find((b) => b.cityId === cityId)) { addNotif("❌ Cabang " + city.name + " sudah ada!", "danger"); return; }
-    setGame((g) => ({ ...g, cash: g.cash - city.cost, deposits: g.deposits + city.deposits * 0.1, reputation: clamp(g.reputation + 8, 0, 100) }));
-    setBranches((b) => b.concat([{ cityId, openDay: game.day, deposits: city.deposits * 0.1, loans: 0 }]));
+    const initDeposit = Math.floor(game.deposits * city.depBonus * 0.1);
+    setGame((g) => ({ ...g, cash: g.cash - city.cost, deposits: g.deposits + initDeposit, reputation: clamp(g.reputation + 8, 0, 100) }));
+    setBranches((b) => b.concat([{ cityId, openDay: game.day, deposits: initDeposit, loans: 0 }]));
     addNotif("🎉 Cabang " + city.name + " berhasil dibuka! Ekspansi nasional dimulai.", "success");
   }, [addNotif]);
 
