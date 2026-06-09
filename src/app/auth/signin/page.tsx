@@ -133,20 +133,7 @@ export default function SignInPage() {
           }}>
             <span>🔵</span> Google
           </button>
-          <button onClick={() => signIn("github", { callbackUrl: "/dashboard" })} style={{
-            padding: "10px 14px", borderRadius: 8, border: "1px solid #2a2a3a",
-            background: "#0d0d14", color: "#ddd", fontSize: 12, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          }}>
-            <span>⚫</span> GitHub
-          </button>
-          <button onClick={() => signIn("discord", { callbackUrl: "/dashboard" })} style={{
-            padding: "10px 14px", borderRadius: 8, border: "1px solid #2a2a3a",
-            background: "#0d0d14", color: "#ddd", fontSize: 12, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          }}>
-            <span>🟣</span> Discord
-          </button>
+
         </div>
       </div>
     </div>
