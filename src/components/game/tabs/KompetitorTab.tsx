@@ -12,7 +12,8 @@ export default function KompetitorTab() {
   const branch = BRANCHES[game.branch];
 
   const totalDeposits = game.deposits + competitors.reduce((s, b) => s + b.deposits, 0);
-  const shareRows = [{ label: "Bank Nusantara", val: game.deposits, color: "#c8a96e" }].concat(
+  const myName = game.bankName || "Bank Nusantara";
+  const shareRows = [{ label: myName, val: game.deposits, color: "#c8a96e" }].concat(
     competitors.map((b) => ({ label: b.name, val: b.deposits, color: "#ef4444" }))
   );
 
@@ -25,7 +26,7 @@ export default function KompetitorTab() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 20 }}>{branch.icon}</span>
             <div>
-              <div style={{ fontWeight: 700, color: "#c8a96e" }}>Bank Nusantara (KAMU)</div>
+              <div style={{ fontWeight: 700, color: "#c8a96e" }}>{myName} (KAMU)</div>
               <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>{branch.name} · {staff.length} staf</div>
             </div>
           </div>
