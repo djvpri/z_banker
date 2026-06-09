@@ -40,7 +40,7 @@ export default function AnalitikTab() {
 
       <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 12, padding: 14, marginBottom: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#60a5fa", marginBottom: 10 }}>👥 Segmentasi Nasabah</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+        <div className="grid-3" style={{ marginBottom: 10 }}>
           {[
             { label: "Retail", val: totalRetail, color: "#60a5fa", icon: "👤", desc: "Tabungan, KTA, deposit kecil" },
             { label: "UMKM", val: totalUmkm, color: "#f59e0b", icon: "🏪", desc: "Pinjaman usaha kecil-menengah" },

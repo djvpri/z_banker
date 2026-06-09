@@ -288,31 +288,31 @@ export default function GameShell({ user }: Props) {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {/* User avatar */}
           <div style={{
-            width: 28, height: 28, borderRadius: "50%",
+            width: 30, height: 30, borderRadius: "50%",
             background: "#c8a96e22", border: "1px solid #c8a96e44",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, color: "#c8a96e", fontWeight: 700,
+            fontSize: 12, color: "#c8a96e", fontWeight: 700, flexShrink: 0,
           }}>
             {user.name?.[0]?.toUpperCase() || "U"}
           </div>
 
           {/* Controls */}
           {[
-            { icon: isMuted ? "🔇" : "🔊", action: () => { toggleMute(); play("click"); }, title: "Toggle suara" },
-            { icon: darkMode ? "☀️" : "🌙", action: () => { toggleDarkMode(); play("click"); }, title: "Toggle tema" },
+            { icon: isMuted ? "🔇" : "🔊", action: () => { toggleMute(); play("click"); }, title: "Suara" },
+            { icon: darkMode ? "☀️" : "🌙", action: () => { toggleDarkMode(); play("click"); }, title: "Tema" },
             { icon: "🔄", action: () => setShowDifficulty(true), title: "New game" },
           ].map((btn) => (
-            <button key={btn.icon} onClick={btn.action} title={btn.title} style={{
-              background: "transparent",
-              border: `1px solid ${darkMode ? "#1a1a2e" : "#e0ddd5"}`,
-              borderRadius: 7,
-              padding: "4px 8px",
-              cursor: "pointer",
-              fontSize: 14,
-            }}>
+            <button key={btn.icon} onClick={btn.action} title={btn.title}
+              className="hdr-btn"
+              style={{
+                background: "transparent",
+                border: `1px solid ${darkMode ? "#1a1a2e" : "#e0ddd5"}`,
+                borderRadius: 7, padding: "4px 7px",
+                cursor: "pointer", fontSize: 14,
+              }}>
               {btn.icon}
             </button>
           ))}
@@ -320,46 +320,46 @@ export default function GameShell({ user }: Props) {
           {/* Logout */}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            title="Logout"
+            title="Keluar"
+            className="hdr-btn"
             style={{
               background: "transparent",
               border: `1px solid ${darkMode ? "#1a1a2e" : "#e0ddd5"}`,
-              borderRadius: 7,
-              padding: "4px 8px",
-              cursor: "pointer",
-              fontSize: 11,
+              borderRadius: 7, padding: "4px 7px",
+              cursor: "pointer", fontSize: 13,
               color: darkMode ? "#666" : "#999",
             }}
           >
-            Keluar
+            <span>🚪</span>
           </button>
 
-          {/* Next Day button — data-tab matches TUTORIAL_STEPS[5].target "nextday-btn" */}
+          {/* Next Day button */}
           <button
             data-tab="nextday-btn"
             onClick={handleNextDay}
             disabled={game.gameOver || game.gameWon}
+            className="hdr-next-day"
             style={{
-              background: game.gameOver || game.gameWon
-                ? "#333"
-                : "linear-gradient(135deg,#c8a96e,#8a6030)",
+              background: game.gameOver || game.gameWon ? "#333" : "linear-gradient(135deg,#c8a96e,#8a6030)",
               color: game.gameOver || game.gameWon ? "#555" : "#000",
               border: "none", borderRadius: 8,
-              padding: "6px 14px",
+              padding: "6px 12px",
               fontWeight: 800, fontSize: 12,
               cursor: game.gameOver || game.gameWon ? "not-allowed" : "pointer",
-              whiteSpace: "nowrap",
+              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
-            ⏭ Next Day
+            ⏭ <span className="hdr-label">Next Day</span>
           </button>
 
-          <Link href="/leaderboard" style={{
-            fontSize: 11, color: "#c8a96e", textDecoration: "none",
-            border: "1px solid #c8a96e33",
-            padding: "4px 10px", borderRadius: 7,
-          }}>
-            🏆 Board
+          <Link href="/leaderboard"
+            className="hdr-btn"
+            style={{
+              fontSize: 13, color: "#c8a96e", textDecoration: "none",
+              border: "1px solid #c8a96e33",
+              padding: "4px 7px", borderRadius: 7,
+            }}>
+            🏆
           </Link>
         </div>
       </div>
@@ -408,7 +408,7 @@ export default function GameShell({ user }: Props) {
       </div>
 
       {/* Main game content area */}
-      <div style={{ padding: "10px 12px", maxWidth: 840, margin: "0 auto" }}>
+      <div className="game-content" style={{ padding: "10px 12px", maxWidth: 840, margin: "0 auto" }}>
         {/* Predictive warnings (in-page, above tab content) */}
         {predictiveWarnings.length > 0 && (
           <div style={{ marginBottom: 10 }}>

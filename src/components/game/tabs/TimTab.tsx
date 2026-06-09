@@ -24,7 +24,7 @@ export default function TimTab() {
       {showHire && <HireModal onHire={handleHire} onClose={() => setShowHire(false)} cash={game.cash} />}
       {fraudEvent && <FraudModal fe={fraudEvent} onResolve={handleFraud} />}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, marginBottom: 12 }}>
+      <div className="grid-4" style={{ marginBottom: 12 }}>
         {(Object.entries(STAFF_ROLES) as [keyof typeof STAFF_ROLES, typeof STAFF_ROLES[keyof typeof STAFF_ROLES]][]).map(([k, r]) => {
           const count = staff.filter((s) => s.role === k).length;
           return (
@@ -45,7 +45,7 @@ export default function TimTab() {
 
       <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 10, padding: 12, marginBottom: 12 }}>
         <div style={{ fontSize: 10, color: "#c8a96e", fontWeight: 700, marginBottom: 8 }}>📊 Efek Tim</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: ts.hasMgr ? 10 : 0 }}>
+        <div className="grid-3" style={{ marginBottom: ts.hasMgr ? 10 : 0 }}>
           <div><div style={{ fontSize: 9, color: "#555" }}>NPL Bonus</div><div style={{ fontSize: 13, color: "#22c55e", fontFamily: "monospace" }}>{ts.nplMod.toFixed(2)}</div></div>
           <div><div style={{ fontSize: 9, color: "#555" }}>Rep Bonus</div><div style={{ fontSize: 13, color: "#60a5fa", fontFamily: "monospace" }}>+{ts.repMod.toFixed(1)}</div></div>
           <div><div style={{ fontSize: 9, color: "#555" }}>Avg Moral</div><div style={{ fontSize: 13, color: "#a78bfa", fontFamily: "monospace" }}>{Math.round(ts.avgMorale)}%</div></div>

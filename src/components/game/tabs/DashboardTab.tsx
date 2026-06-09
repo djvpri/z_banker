@@ -24,7 +24,7 @@ export default function DashboardTab() {
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+    <div className="grid-2">
       <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 12, padding: 14 }}>
         <div style={{ fontSize: 10, color: "#555", marginBottom: 6 }}>PROFIT HARI INI</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: game.profit >= 0 ? "#22c55e" : "#ef4444", fontFamily: "monospace" }}>

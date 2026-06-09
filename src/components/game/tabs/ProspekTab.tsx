@@ -23,7 +23,7 @@ export default function ProspekTab() {
         <div style={{ fontSize: 10, color: "#555" }}>{prospects.length} prospek</div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 10 }}>
+      <div className="grid-3" style={{ gap: 6, marginBottom: 10 }}>
         <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: "#c8a96e" }}>{prospects.filter((p) => !p.contacted).length}</div>
           <div style={{ fontSize: 9, color: "#555" }}>Belum Dikontak</div>

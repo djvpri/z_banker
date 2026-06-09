@@ -137,3 +137,43 @@ body {
 .tab-btn:not(.active):hover {
   color: var(--text-muted);
 }
+
+/* ── Responsive Grid Utilities ──────────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+/* ── Mobile ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+
+  /* Header */
+  .hdr-label { display: none; }
+  .hdr-btn {
+    padding: 6px 7px !important;
+    font-size: 15px !important;
+    min-width: 34px;
+    min-height: 34px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+  .hdr-next-day {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+  .hdr-next-day .hdr-label { display: none; }
+
+  /* Tab nav — bigger touch targets */
+  .tab-btn { padding: 10px 8px !important; font-size: 10px !important; }
+
+  /* Content area */
+  .game-content { padding: 8px !important; }
+
+  /* Cards */
+  .card { padding: 10px !important; }
+
+  /* Modal */
+  .modal-inner { padding: 20px 16px !important; }
+}

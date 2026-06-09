@@ -34,7 +34,7 @@ export default function BungaTab() {
         </div>
       ))}
       <div style={{ background: "#0d0d14", borderRadius: 8, padding: 12 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+        <div className="grid-3">
           <div>
             <div style={{ fontSize: 9, color: "#555" }}>Pendapatan</div>
             <div style={{ color: "#22c55e", fontFamily: "monospace", fontSize: 12 }}>+{fmt(Math.floor((game.loans * (rates.loan / 100)) / 365))}</div>

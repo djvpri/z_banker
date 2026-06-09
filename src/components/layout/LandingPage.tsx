@@ -101,7 +101,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.7, type: "spring" }}
-          style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}
+          style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", width: "100%", maxWidth: 340, padding: "0 16px" }}
         >
           <motion.button
             whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(200,169,110,0.3)" }}
@@ -117,13 +117,13 @@ export default function LandingPage() {
               fontWeight: 700,
               cursor: "pointer",
               letterSpacing: 0.5,
-              width: 280,
+              width: "100%", maxWidth: 320,
             }}
           >
             🔵 Masuk dengan Google
           </motion.button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, width: 280 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
             <div style={{ flex: 1, height: 1, background: "#2a2a3a" }} />
             <span style={{ fontSize: 11, color: "#444" }}>atau</span>
             <div style={{ flex: 1, height: 1, background: "#2a2a3a" }} />
@@ -143,7 +143,7 @@ export default function LandingPage() {
               fontWeight: 700,
               cursor: "pointer",
               letterSpacing: 0.5,
-              width: 280,
+              width: "100%", maxWidth: 320,
             }}
           >
             ✉️ Masuk dengan Email
