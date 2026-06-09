@@ -469,9 +469,11 @@ export function useAdvanceDay() {
 
       const dayOfWeek = currentDay % 7;
       const hourBucket = Math.floor(Math.random() * 4);
+      const freshCustomers = useGameStore.getState().customers.length;
+      const activityCount = Math.max(freshCustomers, rnd(1, 4));
       const newHeat = prev.heatmap.map((row, d) => {
         if (d !== dayOfWeek) return row;
-        return row.map((v, h) => h === hourBucket ? v + customers.length : v);
+        return row.map((v, h) => h === hourBucket ? v + activityCount : v);
       });
 
       const nplHistory = newSeg.slice(-7).map((s) => s.retail + s.umkm * 1.5 + s.korporat * 0.5);
