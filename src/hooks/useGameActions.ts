@@ -18,7 +18,7 @@ export function useGameActions() {
 
   const handleCustomer = useCallback((c: Customer, action: "accept" | "reject") => {
     const { staff, rates, game } = useGameStore.getState();
-    const { setCustomers, setGame, setStaff, setCreditPipeline, setNegotiation } = useGameStore.getState();
+    const { setCustomers, setGame, setStaff, setCreditPipeline, setNegotiation, setSavingsPortfolio } = useGameStore.getState();
 
     setCustomers((p) => p.filter((x) => x.id !== c.id));
     const isDeposit = isDepositType(c.type);
@@ -50,6 +50,16 @@ export function useGameActions() {
         const teller = tellers.reduce((best, x) => (x.workload < best.workload ? x : best), tellers[0]);
         return s.map((x) => (x.id === teller.id ? { ...x, workload: clamp(x.workload + 10, 0, 100) } : x));
       });
+      const isDeposito = c.type === "Deposito" || c.type === "Deposito Korporat";
+      setSavingsPortfolio((sp) => sp.concat([{
+        id: Date.now() + Math.random(),
+        holder: c.name,
+        type: c.type === "Buka Rekening" ? "Tabungan Reguler" : c.type,
+        amount: c.amount,
+        rate: rates.savings,
+        maturity: isDeposito ? rnd(90, 365) : 0,
+        daysLeft: isDeposito ? rnd(60, 300) : 0,
+      }]));
     } else {
       const analysts = staff.filter((s) => s.role === "analis" && s.status === "aktif");
       if (analysts.length === 0) {
