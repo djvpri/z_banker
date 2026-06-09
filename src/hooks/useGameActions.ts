@@ -158,14 +158,24 @@ export function useGameActions() {
     const { setLoanPortfolio, setGame } = useGameStore.getState();
     const loan = loanPortfolio.find((l) => l.id === loanId);
     if (!loan) return;
-    const remaining = loan.tenor - loan.paidMonths;
-    const remainingPrincipal = Math.floor(loan.amount * (remaining / loan.tenor));
-    const penaltyRate = 0.02;
+    const remainingMonths = loan.tenor - loan.paidMonths;
+    const remainingPrincipal = Math.floor(loan.amount * (remainingMonths / loan.tenor));
+    // Bunga yang akan hilang: pokok sisa × rate bulanan × sisa bulan
+    const monthlyRate = loan.rate / 100 / 12;
+    const lostInterest = Math.floor(remainingPrincipal * monthlyRate * remainingMonths);
+    // Penalti lebih besar jika dilunasi sangat awal (>50% sisa tenor)
+    const penaltyRate = remainingMonths / loan.tenor > 0.5 ? 0.03 : 0.015;
     const penalty = Math.floor(remainingPrincipal * penaltyRate);
-    const totalReceived = remainingPrincipal + penalty;
+    const cashReceived = remainingPrincipal + penalty;
+    const netLoss = lostInterest - penalty;
     setLoanPortfolio((lp) => lp.filter((l) => l.id !== loanId));
-    setGame((g) => ({ ...g, cash: g.cash + totalReceived, loans: Math.max(0, g.loans - remainingPrincipal) }));
-    addNotif("💰 " + loan.debtor + " lunasi lebih awal! Terima " + fmt(totalReceived) + " (penalty " + fmt(penalty) + ")", "success");
+    setGame((g) => ({ ...g, cash: g.cash + cashReceived, loans: Math.max(0, g.loans - remainingPrincipal) }));
+    addNotif(
+      "💰 " + loan.debtor + " lunasi awal. Kas +" + fmt(cashReceived) +
+      " | Penalti +" + fmt(penalty) +
+      (netLoss > 0 ? " | ⚠️ Bunga hilang -" + fmt(netLoss) : " | ✅ Penalti > bunga hilang"),
+      netLoss > penalty ? "warning" : "success"
+    );
   }, [addNotif]);
 
   const handleSeizeCollateral = useCallback((loanId: number) => {
