@@ -2,6 +2,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { signOut } from "next-auth/react";
 import { useGameStore } from "@/store/gameStore";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useSound } from "@/hooks/useSound";
@@ -298,6 +299,23 @@ export default function GameShell({ user }: Props) {
               {btn.icon}
             </button>
           ))}
+
+          {/* Logout */}
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            title="Logout"
+            style={{
+              background: "transparent",
+              border: `1px solid ${darkMode ? "#1a1a2e" : "#e0ddd5"}`,
+              borderRadius: 7,
+              padding: "4px 8px",
+              cursor: "pointer",
+              fontSize: 11,
+              color: darkMode ? "#666" : "#999",
+            }}
+          >
+            Keluar
+          </button>
 
           {/* Next Day button — data-tab matches TUTORIAL_STEPS[5].target "nextday-btn" */}
           <button
