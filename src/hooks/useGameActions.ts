@@ -70,7 +70,7 @@ export function useGameActions() {
       const analyst = analysts.reduce((best, s) => (s.workload < best.workload ? s : best), analysts[0]);
 
       if (c.wantsNegotiate && c.negotiationRound === 0) {
-        setNegotiation({ customer: c, proposedRate: rates.loan });
+        setNegotiation({ customer: c, proposedRate: parseFloat((rates.loan - c.counterRateDiscount).toFixed(1)) });
         setCustomers((p) => p.filter((x) => x.id !== c.id));
         return;
       }
