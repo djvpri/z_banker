@@ -14,7 +14,7 @@ import {
 import { genProspect, genLoanCustomer, genCompetitor } from "@/lib/gameGenerators";
 import { applyEvent } from "@/lib/applyEvent";
 import { checkAchievement } from "@/lib/achievementChecks";
-import { GameState, ReviewResult, WeeklyReport, PredictiveWarning, EventLogEntry, StaffRole } from "@/types/game";
+import { GameState, ReviewResult, WeeklyReport, PredictiveWarning, EventLogEntry, StaffRole, LoanStatus } from "@/types/game";
 
 export function useAdvanceDay() {
   const addNotif = useGameStore((s) => s.addNotif);
@@ -115,7 +115,7 @@ export function useAdvanceDay() {
           const defaultRisk = loan.risk === "high" ? 0.04 : loan.risk === "medium" ? 0.015 : 0.005;
           const goesDefault = loan.status === "lancar" && Math.random() < defaultRisk;
           const recovers = loan.status === "perhatian" && Math.random() < 0.1;
-          const newStatus = newPaid >= loan.tenor ? "lunas"
+          const newStatus: LoanStatus = newPaid >= loan.tenor ? "lunas"
             : goesDefault ? "perhatian"
             : recovers ? "lancar"
             : loan.status;
