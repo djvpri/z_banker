@@ -18,6 +18,10 @@ export function useAutoSave(slot = 1) {
   const lpsEnabled = useGameStore((s) => s.lpsEnabled);
   const achievements = useGameStore((s) => s.achievements);
   const rates = useGameStore((s) => s.rates);
+  const competitors = useGameStore((s) => s.competitors);
+  const profitHistory = useGameStore((s) => s.profitHistory);
+  const weeklyReports = useGameStore((s) => s.weeklyReports);
+  const eventLog = useGameStore((s) => s.eventLog);
 
   const save = useCallback(async () => {
     if (!session?.user || isSaving.current) return;
@@ -27,7 +31,8 @@ export function useAutoSave(slot = 1) {
       const gameState = {
         game, staff, rates, loanPortfolio, savingsPortfolio,
         investments, activeProducts, branches, acquired,
-        lpsEnabled, achievements,
+        lpsEnabled, achievements, competitors,
+        profitHistory, weeklyReports, eventLog,
       };
 
       await fetch("/api/game/save", {
@@ -48,7 +53,8 @@ export function useAutoSave(slot = 1) {
       isSaving.current = false;
     }
   }, [session, game, staff, rates, loanPortfolio, savingsPortfolio,
-      investments, activeProducts, branches, acquired, lpsEnabled, achievements, slot]);
+      investments, activeProducts, branches, acquired, lpsEnabled, achievements,
+      competitors, profitHistory, weeklyReports, eventLog, slot]);
 
   return { save };
 }

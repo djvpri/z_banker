@@ -23,13 +23,14 @@ export function useAdvanceDay() {
   const advanceDay = useCallback(() => {
     const {
       game, staff, customers, rates, activeProducts, investments, branches, lpsEnabled,
-      loanPortfolio, savingsPortfolio,
+      loanPortfolio, savingsPortfolio, earlyRepayRequests, earlyRepayOffers,
     } = useGameStore.getState();
     const {
       setStaff, setLoanPortfolio, setCreditPipeline, setSavingsPortfolio, setGame,
       setProfitHistory, setWeeklyReports, setShowWeeklyReport, setAchievements,
       setPredictiveWarnings, setReviewModal, setCompetitors, setCustomers,
       setEventLog, setActiveEvent, setFraudEvent, setProspects, setAnalyticsData,
+      setEarlyRepayRequests, setEarlyRepayOffers,
     } = useGameStore.getState();
 
     const currentDay = game.day;
@@ -39,10 +40,32 @@ export function useAdvanceDay() {
 
     // Effect 2: Manager redistributes workload daily (-5..-10 for all active staff)
     const mgrWorkloadRelief = hasMgr ? Math.round(5 + mgrSkill * 0.5) : 0;
-    const activeCount = localStaff.filter((s) => s.status === "aktif").length || 1;
-    const loadPerStaff = Math.min(100, Math.round((customers.length / activeCount) * 15 + rnd(5, 20)));
     // Effect 3: Manager raises auto-rest threshold 90% -> 95%
     const autoRestThreshold = hasMgr ? 95 : 90;
+
+    // Role-based load: teller handles deposits, analis handles loans, CS handles all
+    const depositCusts = customers.filter((c) => ["Deposito","Buka Rekening","Deposito Korporat"].indexOf(c.type) >= 0).length;
+    const loanCusts = customers.filter((c) => ["Pinjaman KPR","Pinjaman Usaha","Pinjaman KTA"].indexOf(c.type) >= 0).length;
+    const activeTellers = localStaff.filter((s) => s.role === "teller" && s.status === "aktif").length || 1;
+    const activeAnalysts = localStaff.filter((s) => s.role === "analis" && s.status === "aktif").length || 1;
+    const activeCS = localStaff.filter((s) => s.role === "cs" && s.status === "aktif").length || 1;
+    const activeOthers = localStaff.filter((s) => !["teller","analis","cs"].includes(s.role) && s.status === "aktif").length || 1;
+
+    const loadForRole = (role: string) => {
+      if (role === "teller")
+        return depositCusts === 0
+          ? rnd(0, 2)
+          : Math.min(70, Math.round((depositCusts / activeTellers) * 12 + rnd(1, 5)));
+      if (role === "analis")
+        return loanCusts === 0
+          ? rnd(0, 2)
+          : Math.min(70, Math.round((loanCusts / activeAnalysts) * 15 + rnd(1, 5)));
+      if (role === "cs")
+        return customers.length === 0
+          ? rnd(0, 2)
+          : Math.min(70, Math.round((customers.length / activeCS) * 8 + rnd(1, 5)));
+      return rnd(0, 2);
+    };
 
     localStaff = localStaff.map((s) => {
       if (s.status === "istirahat") {
@@ -53,7 +76,9 @@ export function useAdvanceDay() {
         return { ...s, workload: clamp(s.workload - wlRecovery, 0, 100), morale: clamp(s.morale + morRecover, 0, 100), exp: s.exp + 1, daysWorked: s.daysWorked + 1, status: "aktif" as const, restDay: -1 };
       }
 
-      const newWl = clamp(s.workload + loadPerStaff + rnd(-5, 10) - mgrWorkloadRelief, 0, 100);
+      const roleLoad = loadForRole(s.role);
+      // Slight recovery bias: avg rnd(-5,3) = -1 so idle staff gradually cool down
+      const newWl = clamp(s.workload + roleLoad + rnd(-5, 3) - mgrWorkloadRelief, 0, 100);
       const md = newWl > 80 ? -rnd(3, 8) : newWl < 50 ? rnd(1, 4) : rnd(-1, 2);
       const newMorale = clamp(s.morale + md, 0, 100);
 
@@ -107,21 +132,87 @@ export function useAdvanceDay() {
 
     setStaff(() => localStaff);
 
+    // ── Resolve bank offers (sent yesterday) ───────────────────────────────
+    const currentLoanPortfolio = useGameStore.getState().loanPortfolio;
+    const resolvedOfferIds: number[] = [];
+    earlyRepayOffers.forEach((offer) => {
+      if (offer.sentDay >= game.day) return; // sent today, resolve tomorrow
+      const loan = currentLoanPortfolio.find((l) => l.id === offer.loanId);
+      if (!loan) { resolvedOfferIds.push(offer.loanId); return; }
+      const baseRate = 0.30;
+      const repBonus = game.reputation >= 70 ? 0.15 : game.reputation >= 50 ? 0.08 : 0;
+      const riskBonus = loan.risk === "high" ? 0.20 : loan.risk === "medium" ? 0.10 : 0;
+      const macetBonus = loan.status === "macet" ? 0.15 : loan.status === "perhatian" ? 0.08 : 0;
+      const successRate = baseRate + repBonus + riskBonus + macetBonus;
+      const accepted = Math.random() < successRate;
+      if (accepted) {
+        const remainingMonths = loan.tenor - loan.paidMonths;
+        const remainingPrincipal = Math.floor(loan.amount * (remainingMonths / loan.tenor));
+        const monthlyRate = loan.rate / 100 / 12;
+        const lostInterest = Math.floor(remainingPrincipal * monthlyRate * remainingMonths);
+        const penaltyRate = remainingMonths / loan.tenor > 0.5 ? 0.03 : 0.015;
+        const penalty = Math.floor(remainingPrincipal * penaltyRate);
+        const cashReceived = remainingPrincipal + penalty;
+        const netLoss = lostInterest - penalty;
+        setLoanPortfolio((lp) => lp.filter((l) => l.id !== loan.id));
+        setGame((g) => ({ ...g, cash: g.cash + cashReceived, loans: Math.max(0, g.loans - remainingPrincipal) }));
+        addNotif(
+          "💰 " + loan.debtor + " setuju lunasi awal! Kas +" + fmt(cashReceived) +
+          (netLoss > 0 ? " | ⚠️ Bunga hilang -" + fmt(netLoss) : " | ✅ Penalti > bunga hilang"),
+          netLoss > penalty ? "warning" : "success"
+        );
+      } else {
+        addNotif("❌ " + loan.debtor + " menolak penawaran pelunasan awal.", "danger");
+      }
+      resolvedOfferIds.push(offer.loanId);
+    });
+    if (resolvedOfferIds.length > 0) {
+      setEarlyRepayOffers((o) => o.filter((x) => !resolvedOfferIds.includes(x.loanId)));
+    }
+
+    // ── Generate debtor-initiated early repay requests ──────────────────────
+    const existingRequestIds = new Set(earlyRepayRequests.map((r) => r.loanId));
+    const existingOfferIds = new Set(earlyRepayOffers.map((o) => o.loanId));
+    const freshLoanPortfolio = useGameStore.getState().loanPortfolio;
+    const newRequests: typeof earlyRepayRequests = [];
+    freshLoanPortfolio.forEach((loan) => {
+      if (existingRequestIds.has(loan.id) || existingOfferIds.has(loan.id)) return;
+      const chanceMap: Record<string, number> = { macet: 0.12, perhatian: 0.06, lancar: 0.015 };
+      const chance = chanceMap[loan.status] ?? 0;
+      if (Math.random() < chance) {
+        newRequests.push({ loanId: loan.id, debtorName: loan.debtor, loanType: loan.type, day: game.day });
+        addNotif("📩 " + loan.debtor + " ingin melunasi kredit lebih awal!", "info");
+      }
+    });
+    if (newRequests.length > 0) {
+      setEarlyRepayRequests((r) => r.concat(newRequests));
+    }
+
     // ── Loan Lifecycle: advance paidMonths, check macet/lunas ───────────────
     setLoanPortfolio((lp) =>
       lp
         .map((loan) => {
           if (loan.status === "lunas") return loan;
           const newPaid = loan.paidMonths + 1;
-          const defaultRisk = loan.risk === "high" ? 0.04 : loan.risk === "medium" ? 0.015 : 0.005;
-          const goesDefault = loan.status === "lancar" && Math.random() < defaultRisk;
-          const recovers = loan.status === "perhatian" && Math.random() < 0.1;
+          const hasCollateral = !!loan.collateral && loan.collateralValue > 0;
+          const collateralMod = hasCollateral ? 0.5 : 1.0;
+          // defaultRisk berkurang 50% jika ada kolateral
+          const baseDefault = loan.risk === "high" ? 0.05 : loan.risk === "medium" ? 0.02 : 0.006;
+          const defaultRisk = baseDefault * collateralMod;
+          const goesDefault   = loan.status === "lancar"    && Math.random() < defaultRisk;
+          const worsens       = loan.status === "perhatian" && Math.random() < 0.15 * collateralMod;
+          const recovers      = loan.status === "perhatian" && !worsens && Math.random() < 0.12;
+          const macetRecovers = loan.status === "macet"     && Math.random() < (hasCollateral ? 0.06 : 0.02);
           const newStatus: LoanStatus = newPaid >= loan.tenor ? "lunas"
-            : goesDefault ? "perhatian"
-            : recovers ? "lancar"
+            : goesDefault   ? "perhatian"
+            : worsens       ? "macet"
+            : recovers      ? "lancar"
+            : macetRecovers ? "perhatian"
             : loan.status;
           if (newStatus === "lunas") addNotif("✅ Kredit " + loan.debtor + " telah lunas!", "success");
           if (goesDefault) addNotif("⚠️ " + loan.debtor + " mulai bermasalah — kredit masuk perhatian.", "warning");
+          if (worsens) addNotif("🔴 " + loan.debtor + " gagal bayar! Kredit macet." + (hasCollateral ? " (kolateral siap disita)" : ""), "danger");
+          if (macetRecovers) addNotif("📈 " + loan.debtor + " mulai bayar kembali — dari macet ke perhatian.", "info");
           return { ...loan, paidMonths: newPaid, status: newStatus };
         })
         .filter((loan) => {
@@ -149,15 +240,10 @@ export function useAdvanceDay() {
 
       readyToDisburse.forEach((p) => {
         const c = p.customer;
-        const risky = c.score < 500 || c.risk > 70;
-        const analyst = localStaff.find((s) => s.id === p.analystId);
-        const analystSkill = analyst ? analyst.skill : 3;
-        const nplImpact = risky ? Math.max(0.05, 0.4 - (analystSkill - 3) * 0.04) : 0;
         setGame((g) => ({
           ...g,
           loans: g.loans + c.amount,
           cash: g.cash + c.amount,
-          npl: risky ? clamp(g.npl + nplImpact, 0.5, 15) : g.npl,
         }));
         setLoanPortfolio((lp) => lp.concat([{
           id: Date.now() + Math.random(),
@@ -234,7 +320,21 @@ export function useAdvanceDay() {
       const dailyProfit = Math.floor((inc * (1 + perfBonus)) - exp - totalSalary + investIncome + serviceIncome + branchIncome - lpsPremium);
       const newCash = prev.cash + dailyProfit;
       const newDeposits = prev.deposits + payrollDeposit;
-      const newNpl = clamp(prev.npl + (Math.random() - 0.47) * 0.35 - ts.nplMod * 0.1, 0.5, 15);
+
+      // NPL derived from actual portfolio: macet 100% + perhatian 50%
+      const currentLP = useGameStore.getState().loanPortfolio;
+      const macetAmt = currentLP.filter((l) => l.status === "macet").reduce((s, l) => s + l.amount, 0);
+      const perhatianAmt = currentLP.filter((l) => l.status === "perhatian").reduce((s, l) => s + l.amount, 0);
+      const totalLoanAmt = Math.max(currentLP.reduce((s, l) => s + l.amount, 0), 1);
+      const portfolioNpl = currentLP.length > 0
+        ? (macetAmt + perhatianAmt * 0.5) / totalLoanAmt * 100
+        : 0;
+      // Trend toward portfolio NPL ±small noise, team modifier helps reduce it
+      const target = Math.max(0.5, portfolioNpl);
+      // Recovery (turun) lebih cepat dari kenaikan supaya semua-lancar terasa responsif
+      const driftRate = target < prev.npl ? 0.65 : 0.35;
+      const drift = (target - prev.npl) * driftRate;
+      const newNpl = clamp(prev.npl + drift + (Math.random() - 0.5) * 0.1 - ts.nplMod * 0.05, 0.5, 15);
       const newRep = clamp(prev.reputation + (Math.random() > 0.5 ? 1 : -1) + (ts.repMod > 0 ? 1 : 0), 0, 100);
       const newLdr = prev.deposits > 0 ? Math.round((prev.loans / prev.deposits) * 100) : 0;
       const newNim = Math.max(0, rates.loan + productNimBonus - rates.savings - 1.5);
@@ -355,9 +455,16 @@ export function useAdvanceDay() {
       });
 
       const newEntrants: typeof survived = [];
-      const shouldEnter = exited.length > 0 || (Math.random() < 0.08 && remaining.length < 4);
+      // Use currentDay+1 (deterministic) instead of getState() which can see stale state inside updater
+      const advancedDay = currentDay + 1;
+      const difficulty = game.difficulty;
+      const spawnRate = difficulty === "hard" ? 0.35 : difficulty === "normal" ? 0.22 : 0.15;
+      const maxCompetitors = difficulty === "hard" ? 6 : 5;
+      const guaranteedDay = difficulty === "hard" ? 5 : 7;
+      const guaranteedFirst = remaining.length === 0 && advancedDay >= guaranteedDay;
+      const shouldEnter = exited.length > 0 || guaranteedFirst || (Math.random() < spawnRate && remaining.length < maxCompetitors);
       if (shouldEnter) {
-        const nb = genCompetitor(useGameStore.getState().game.day);
+        const nb = genCompetitor(advancedDay);
         newEntrants.push(nb);
         addNotif("🏦 " + nb.name + " baru masuk pasar! Strategi: " + nb.strategy + ".", "info");
       }

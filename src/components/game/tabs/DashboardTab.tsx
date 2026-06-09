@@ -28,7 +28,14 @@ export default function DashboardTab() {
 
   // Portfolio summary
   const macet = loanPortfolio.filter((l) => l.status === "macet").length;
+  const perhatian = loanPortfolio.filter((l) => l.status === "perhatian").length;
   const jatuhTempo = savingsPortfolio.filter((s) => s.maturity > 0 && s.daysLeft <= 3).length;
+
+  // Portfolio-based NPL (real-time, belum di-smooth)
+  const macetAmt = loanPortfolio.filter((l) => l.status === "macet").reduce((s, l) => s + l.amount, 0);
+  const perhatianAmt = loanPortfolio.filter((l) => l.status === "perhatian").reduce((s, l) => s + l.amount, 0);
+  const totalLoanAmt = loanPortfolio.reduce((s, l) => s + l.amount, 0);
+  const portfolioNpl = totalLoanAmt > 0 ? (macetAmt + perhatianAmt * 0.5) / totalLoanAmt * 100 : 0;
 
   // Win progress
   const progressPct = Math.min(Math.round((game.totalProfit / cfg.targetProfit) * 100), 100);
@@ -159,19 +166,52 @@ export default function DashboardTab() {
       {/* ── Kesehatan Bank ── */}
       {card(<>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#c8a96e", marginBottom: 10 }}>🎯 Kesehatan Bank</div>
-        {[
-          { label: "CAR", val: game.car, max: 25, color: carColor, min: "Min 8%" },
-          { label: "NPL", val: game.npl, max: 10, color: nplColor, min: "Maks 5%" },
-          { label: "Reputasi", val: game.reputation, max: 100, color: repColor, min: "Min 40%" },
-        ].map((r) => (
-          <div key={r.label} style={{ marginBottom: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#aaa", marginBottom: 3 }}>
-              <span>{r.label} <span style={{ fontSize: 9, color: "#444" }}>({r.min})</span></span>
-              <span style={{ color: r.color, fontFamily: "monospace" }}>{r.val}%</span>
-            </div>
-            <Bar val={r.val} max={r.max} color={r.color} />
+
+        {/* CAR */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#aaa", marginBottom: 3 }}>
+            <span>CAR <span style={{ fontSize: 9, color: "#444" }}>(Min 8%)</span></span>
+            <span style={{ color: carColor, fontFamily: "monospace" }}>{game.car}%</span>
           </div>
-        ))}
+          <Bar val={game.car} max={25} color={carColor} />
+        </div>
+
+        {/* NPL dengan breakdown portofolio */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#aaa", marginBottom: 3 }}>
+            <span>NPL <span style={{ fontSize: 9, color: "#444" }}>(Maks 5%)</span></span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {loanPortfolio.length > 0 && portfolioNpl < game.npl && (
+                <span style={{ fontSize: 9, color: "#22c55e" }}>▼ menuju {Math.max(0.5, portfolioNpl).toFixed(1)}%</span>
+              )}
+              {loanPortfolio.length > 0 && portfolioNpl > game.npl && (
+                <span style={{ fontSize: 9, color: "#ef4444" }}>▲ menuju {portfolioNpl.toFixed(1)}%</span>
+              )}
+              <span style={{ color: nplColor, fontFamily: "monospace" }}>{game.npl}%</span>
+            </div>
+          </div>
+          <Bar val={game.npl} max={10} color={nplColor} />
+          <div style={{ fontSize: 9, marginTop: 3 }}>
+            {loanPortfolio.length === 0 ? (
+              <span style={{ color: "#555" }}>Belum ada kredit aktif</span>
+            ) : macet === 0 && perhatian === 0 ? (
+              <span style={{ color: "#22c55e" }}>✓ Semua kredit lancar</span>
+            ) : (
+              <span style={{ color: "#ef4444" }}>
+                {macet > 0 && `${macet} macet`}{macet > 0 && perhatian > 0 && " · "}{perhatian > 0 && `${perhatian} perhatian`}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Reputasi */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#aaa", marginBottom: 3 }}>
+            <span>Reputasi <span style={{ fontSize: 9, color: "#444" }}>(Min 40%)</span></span>
+            <span style={{ color: repColor, fontFamily: "monospace" }}>{game.reputation}%</span>
+          </div>
+          <Bar val={game.reputation} max={100} color={repColor} />
+        </div>
       </>, true)}
 
     </div>

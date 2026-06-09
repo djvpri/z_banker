@@ -6,6 +6,7 @@ import {
   Prospect, Investment, CityBranch, CreditPipelineItem, WeeklyReport,
   EventLogEntry, Competitor, AnalyticsData, Difficulty, DIFFICULTY_CONFIG,
   Notif, Negotiation, FraudEvent, GameEvent, ReviewModalData, PredictiveWarning,
+  EarlyRepayRequest, EarlyRepayOffer,
 } from "@/types/game";
 
 const M = 1_000_000;
@@ -17,10 +18,9 @@ const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 export const STAFF_NAMES_FIRST = ["Budi","Dewi","Hendra","Siti","Agus","Rina","Joko","Maya","Doni","Lestari","Fajar","Intan","Rudi","Citra","Bagas"];
 export const STAFF_NAMES_LAST  = ["S.","R.","K.","N.","P.","W.","H.","L.","F.","A."];
 
-let _staffId = 10;
 export function genStaff(role: Staff["role"]): Staff {
   return {
-    id: ++_staffId,
+    id: Date.now() + Math.random(),
     name: pick(STAFF_NAMES_FIRST) + " " + pick(STAFF_NAMES_LAST),
     role, skill: rnd(3,9), speed: rnd(3,9), loyalty: rnd(4,10),
     workload: 0, morale: rnd(60,90), exp: 0,
@@ -36,7 +36,7 @@ function makeInitGame(difficulty: Difficulty): GameState {
   const cfg = DIFFICULTY_CONFIG[difficulty];
   return {
     day: 1, cash: cfg.startCash, deposits: 200*M, loans: 150*M,
-    reputation: 60, npl: 2.1, car: 18.5, ldr: 75, nim: 3.2,
+    reputation: 60, npl: 0.5, car: 18.5, ldr: 75, nim: 3.2,
     profit: 0, totalProfit: 0, gameOver: false, gameWon: false,
     branch: 0, level: 1, difficulty,
     tutorialStep: 0, tutorialDone: false,
@@ -59,6 +59,8 @@ interface GameStore {
   notifs: Notif[];
   negotiation: Negotiation | null;
   fraudEvent: FraudEvent | null;
+  earlyRepayRequests: EarlyRepayRequest[];
+  earlyRepayOffers: EarlyRepayOffer[];
   showHire: boolean;
   showWeeklyReport: WeeklyReport | null;
   activeEvent: GameEvent | null;
@@ -97,6 +99,8 @@ interface GameStore {
   addNotif: (msg: string, type?: Notif["type"]) => void;
   setNegotiation: (n: Negotiation | null) => void;
   setFraudEvent: (fe: FraudEvent | null) => void;
+  setEarlyRepayRequests: (updater: (r: EarlyRepayRequest[]) => EarlyRepayRequest[]) => void;
+  setEarlyRepayOffers: (updater: (o: EarlyRepayOffer[]) => EarlyRepayOffer[]) => void;
   setShowHire: (v: boolean) => void;
   setShowWeeklyReport: (r: WeeklyReport | null) => void;
   setActiveEvent: (e: GameEvent | null) => void;
@@ -138,6 +142,8 @@ export const useGameStore = create<GameStore>()(
       notifs: [],
       negotiation: null,
       fraudEvent: null,
+      earlyRepayRequests: [],
+      earlyRepayOffers: [],
       showHire: false,
       showWeeklyReport: null,
       activeEvent: null,
@@ -182,6 +188,8 @@ export const useGameStore = create<GameStore>()(
       },
       setNegotiation: (n) => set({ negotiation: n }),
       setFraudEvent: (fe) => set({ fraudEvent: fe }),
+      setEarlyRepayRequests: (updater) => set((s) => ({ earlyRepayRequests: updater(s.earlyRepayRequests) })),
+      setEarlyRepayOffers: (updater) => set((s) => ({ earlyRepayOffers: updater(s.earlyRepayOffers) })),
       setShowHire: (v) => set({ showHire: v }),
       setShowWeeklyReport: (r) => set({ showWeeklyReport: r }),
       setActiveEvent: (e) => set({ activeEvent: e }),
@@ -225,9 +233,15 @@ export const useGameStore = create<GameStore>()(
         profitHistory: gs.profitHistory ?? [],
         weeklyReports: gs.weeklyReports ?? [],
         eventLog: gs.eventLog ?? [],
+        competitors: gs.competitors ?? [],
+        profitHistory: gs.profitHistory ?? [],
+        weeklyReports: gs.weeklyReports ?? [],
+        eventLog: gs.eventLog ?? [],
         notifs: [],
         negotiation: null,
         fraudEvent: null,
+        earlyRepayRequests: [],
+        earlyRepayOffers: [],
         showHire: false,
         showWeeklyReport: null,
         activeEvent: null,
@@ -235,7 +249,6 @@ export const useGameStore = create<GameStore>()(
         predictiveWarnings: [],
         customers: [],
         prospects: [],
-        competitors: [],
         creditPipeline: [],
         stressResult: null,
         bmpkLog: [],
@@ -249,6 +262,8 @@ export const useGameStore = create<GameStore>()(
         notifs: [],
         negotiation: null,
         fraudEvent: null,
+        earlyRepayRequests: [],
+        earlyRepayOffers: [],
         showHire: false,
         showWeeklyReport: null,
         activeEvent: null,

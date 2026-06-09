@@ -8,7 +8,9 @@ import { Bar } from "../ui/Shared";
 export default function PortofolioTab() {
   const loanPortfolio = useGameStore((s) => s.loanPortfolio);
   const savingsPortfolio = useGameStore((s) => s.savingsPortfolio);
-  const { handleEarlyRepayment, handleSeizeCollateral } = useGameActions();
+  const earlyRepayRequests = useGameStore((s) => s.earlyRepayRequests);
+  const earlyRepayOffers = useGameStore((s) => s.earlyRepayOffers);
+  const { handleSendOffer, handleAcceptRequest, handleRejectRequest, handleSeizeCollateral } = useGameActions();
 
   const groups = [
     { label: "Lancar (Kol. 1)", items: loanPortfolio.filter((l) => l.status === "lancar"), color: "#22c55e" },
@@ -49,7 +51,6 @@ export default function PortofolioTab() {
         const prog = Math.round((loan.paidMonths / loan.tenor) * 100);
         const rc = loan.risk === "low" ? "#22c55e" : loan.risk === "medium" ? "#f59e0b" : "#ef4444";
         const sc = loan.status === "lancar" ? "#22c55e" : loan.status === "perhatian" ? "#f59e0b" : "#ef4444";
-        // Kalkulasi pelunasan awal
         const remainingMonths = loan.tenor - loan.paidMonths;
         const remainingPrincipal = Math.floor(loan.amount * (remainingMonths / loan.tenor));
         const lostInterest = Math.floor(remainingPrincipal * (loan.rate / 100 / 12) * remainingMonths);
@@ -57,8 +58,10 @@ export default function PortofolioTab() {
         const penalty = Math.floor(remainingPrincipal * penaltyRate);
         const netLoss = lostInterest - penalty;
         const isGoodDeal = netLoss <= 0;
+        const hasPendingOffer = earlyRepayOffers.some((o) => o.loanId === loan.id);
+        const hasDebtorRequest = earlyRepayRequests.some((r) => r.loanId === loan.id);
         return (
-          <div key={loan.id} style={{ background: "#0e0e18", border: `1px solid ${rc}22`, borderRadius: 10, padding: 12, marginBottom: 7 }}>
+          <div key={loan.id} style={{ background: "#0e0e18", border: `1px solid ${hasDebtorRequest ? "#60a5fa55" : rc + "22"}`, borderRadius: 10, padding: 12, marginBottom: 7 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
               <div>
                 <div style={{ fontWeight: 700, color: "#ddd", fontSize: 12 }}>{loan.debtor}</div>
@@ -75,21 +78,36 @@ export default function PortofolioTab() {
               <span>{prog}%</span>
             </div>
             <Bar val={prog} max={100} color={rc} height={4} />
+
+            {/* Debtor request banner */}
+            {hasDebtorRequest && (
+              <div style={{ marginTop: 8, background: "#1e2a3a", border: "1px solid #60a5fa44", borderRadius: 6, padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ fontSize: 10, color: "#60a5fa" }}>📩 Debitur minta lunasi lebih awal</span>
+                <div style={{ display: "flex", gap: 5 }}>
+                  <button onClick={() => handleAcceptRequest(loan.id)} style={{ fontSize: 9, background: "#22c55e22", border: "1px solid #22c55e44", color: "#22c55e", borderRadius: 5, padding: "3px 8px", cursor: "pointer" }}>✅ Terima</button>
+                  <button onClick={() => handleRejectRequest(loan.id)} style={{ fontSize: 9, background: "#ef444418", border: "1px solid #ef444433", color: "#ef4444", borderRadius: 5, padding: "3px 8px", cursor: "pointer" }}>❌ Tolak</button>
+                </div>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
-              <button
-                onClick={() => handleEarlyRepayment(loan.id)}
-                title={`Kas masuk: ${fmt(remainingPrincipal + penalty)} | Penalti: ${fmt(penalty)} | Bunga hilang: ${fmt(lostInterest)}`}
-                style={{ fontSize: 9, background: isGoodDeal ? "#22c55e18" : "#f59e0b18", border: `1px solid ${isGoodDeal ? "#22c55e33" : "#f59e0b33"}`, color: isGoodDeal ? "#22c55e" : "#f59e0b", borderRadius: 5, padding: "3px 8px", cursor: "pointer" }}
-              >
-                {isGoodDeal ? "✅" : "⚠️"} Lunasi Awal
-              </button>
+              {hasPendingOffer ? (
+                <span style={{ fontSize: 9, background: "#f59e0b18", border: "1px solid #f59e0b33", color: "#f59e0b", borderRadius: 5, padding: "3px 8px" }}>⏳ Menunggu jawaban debitur...</span>
+              ) : (
+                <button
+                  onClick={() => handleSendOffer(loan.id)}
+                  title={`Kas masuk jika diterima: ${fmt(remainingPrincipal + penalty)} | Penalti: ${fmt(penalty)} | Bunga hilang: ${fmt(lostInterest)}`}
+                  style={{ fontSize: 9, background: isGoodDeal ? "#22c55e18" : "#f59e0b18", border: `1px solid ${isGoodDeal ? "#22c55e33" : "#f59e0b33"}`, color: isGoodDeal ? "#22c55e" : "#f59e0b", borderRadius: 5, padding: "3px 8px", cursor: "pointer" }}
+                >
+                  {isGoodDeal ? "✅" : "⚠️"} Tawarkan Lunasi Awal
+                </button>
+              )}
               {loan.status === "perhatian" && loan.collateral && (
                 <button onClick={() => handleSeizeCollateral(loan.id)} style={{ fontSize: 9, background: "#ef444418", border: "1px solid #ef444433", color: "#ef4444", borderRadius: 5, padding: "3px 8px", cursor: "pointer" }}>🏠 Sita Kolateral</button>
               )}
             </div>
-            {/* Info pelunasan awal */}
             <div style={{ marginTop: 6, fontSize: 9, color: "#444", background: "#0d0d14", borderRadius: 5, padding: "4px 8px" }}>
-              Jika dilunasi awal: kas +{fmt(remainingPrincipal + penalty)}
+              Jika diterima: kas +{fmt(remainingPrincipal + penalty)}
               <span style={{ color: "#22c55e" }}> · penalti +{fmt(penalty)}</span>
               <span style={{ color: "#ef4444" }}> · bunga hilang -{fmt(lostInterest)}</span>
               <span style={{ color: isGoodDeal ? "#22c55e" : "#f59e0b" }}> · net {isGoodDeal ? "+" : "-"}{fmt(Math.abs(netLoss))}</span>

@@ -17,9 +17,9 @@ export const PROMO_PATHS: Partial<Record<StaffRole, { to: StaffRole; expNeeded: 
 };
 
 export const BRANCHES = [
-  { name: "Cabang Kecil", icon: "🏠", maxCustomers: 5,  repBonus: 0,  cost: 0,        workloadCap: 60 },
-  { name: "Cabang Madya", icon: "🏢", maxCustomers: 10, repBonus: 10, cost: 500 * M,  workloadCap: 75 },
-  { name: "Kantor Pusat", icon: "🏙️", maxCustomers: 20, repBonus: 25, cost: 2 * B,    workloadCap: 90 },
+  { name: "Cabang Kecil", icon: "🏠", maxCustomers: 5,  repBonus: 0,  cost: 0,        workloadCap: 60, maxStaff: 5  },
+  { name: "Cabang Madya", icon: "🏢", maxCustomers: 10, repBonus: 10, cost: 500 * M,  workloadCap: 75, maxStaff: 10 },
+  { name: "Kantor Pusat", icon: "🏙️", maxCustomers: 20, repBonus: 25, cost: 2 * B,    workloadCap: 90, maxStaff: 20 },
 ];
 
 export const CITIES = [

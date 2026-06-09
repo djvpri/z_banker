@@ -2,7 +2,7 @@
 "use client";
 import { useGameStore } from "@/store/gameStore";
 import { useGameActions } from "@/hooks/useGameActions";
-import { STAFF_ROLES } from "@/lib/gameConstants";
+import { STAFF_ROLES, BRANCHES } from "@/lib/gameConstants";
 import { teamStats } from "@/lib/teamStats";
 import StaffCard from "../ui/StaffCard";
 import HireModal from "../modals/HireModal";
@@ -18,6 +18,8 @@ export default function TimTab() {
 
   const burnouts = staff.filter((s) => s.status === "burnout").length;
   const ts = teamStats(staff);
+  const maxStaff = BRANCHES[game.branch]?.maxStaff ?? 5;
+  const isFull = staff.length >= maxStaff;
 
   return (
     <div>
@@ -71,8 +73,12 @@ export default function TimTab() {
       {staff.map((s) => (
         <StaffCard key={s.id} s={s} onTrain={handleTrain} onRest={handleRest} onFire={handleFire} onPromote={handlePromote} currentDay={game.day} />
       ))}
-      <button onClick={() => setShowHire(true)} style={{ width: "100%", background: "#c8a96e18", border: "1px solid #c8a96e44", color: "#c8a96e", borderRadius: 10, padding: 12, cursor: "pointer", fontSize: 13, fontWeight: 700, marginTop: 4 }}>
-        + Rekrut Staf Baru
+      <button
+        onClick={() => setShowHire(true)}
+        disabled={isFull}
+        style={{ width: "100%", background: isFull ? "#1a1a2e" : "#c8a96e18", border: `1px solid ${isFull ? "#333" : "#c8a96e44"}`, color: isFull ? "#444" : "#c8a96e", borderRadius: 10, padding: 12, cursor: isFull ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 700, marginTop: 4 }}
+      >
+        {isFull ? `🔒 Kapasitas Penuh (${staff.length}/${maxStaff}) — Upgrade Cabang` : `+ Rekrut Staf Baru (${staff.length}/${maxStaff})`}
       </button>
     </div>
   );

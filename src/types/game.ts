@@ -87,7 +87,7 @@ export interface Prospect {
 }
 
 export interface Investment {
-  id: number;
+  id: string | number;
   instrument: string;
   amount: number;
   startDay: number;
@@ -136,6 +136,18 @@ export interface Notif {
 export interface Negotiation {
   customer: Customer;
   proposedRate: number;
+}
+
+export interface EarlyRepayRequest {
+  loanId: number;
+  debtorName: string;
+  loanType: string;
+  day: number;
+}
+
+export interface EarlyRepayOffer {
+  loanId: number;
+  sentDay: number;
 }
 
 export interface GameEvent {

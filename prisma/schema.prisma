@@ -81,12 +81,15 @@ model LeaderboardEntry {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   playerName  String
+  bankName    String   @default("Bank Nusantara")
   totalProfit BigInt
   day         Int
   level       Int
   difficulty  String
   branch      String   @default("Cabang Kecil")
   achievements Int     @default(0)
+  npl         Float    @default(0)
+  reputation  Int      @default(0)
   submittedAt DateTime @default(now())
 
   @@index([totalProfit(sort: Desc)])

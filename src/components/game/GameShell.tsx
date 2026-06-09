@@ -66,10 +66,14 @@ export default function GameShell({ user }: Props) {
   } = useGameActions();
   const { advanceDay } = useAdvanceDay();
 
+  const staff = useGameStore((s) => s.staff);
+  const achievements = useGameStore((s) => s.achievements);
+
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [coinFloats, setCoinFloats] = useState<{ id: number; x: number }[]>([]);
   const [editingBankName, setEditingBankName] = useState(false);
   const [bankNameInput, setBankNameInput] = useState("");
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   // Apply dark/light mode
   useEffect(() => {
@@ -105,6 +109,32 @@ export default function GameShell({ user }: Props) {
       save();
     }
   }, [game.day]);
+
+  // Auto-submit to leaderboard when game is won
+  useEffect(() => {
+    if (!game.gameWon || scoreSubmitted || !user?.name) return;
+    setScoreSubmitted(true);
+    const cfg = DIFFICULTY_CONFIG[game.difficulty];
+    const BRANCH_NAMES: Record<number, string> = {
+      0: "Cabang Kecil", 1: "Cabang Madya", 2: "Kantor Pusat",
+    };
+    fetch("/api/leaderboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        playerName: user.name,
+        bankName: game.bankName || "Bank Nusantara",
+        totalProfit: game.totalProfit,
+        day: game.day,
+        level: game.level,
+        difficulty: game.difficulty,
+        branch: BRANCH_NAMES[game.branch] || "Cabang Kecil",
+        achievements: achievements.length,
+        npl: game.npl,
+        reputation: game.reputation,
+      }),
+    }).catch(() => {});
+  }, [game.gameWon]);
 
   // Profit coin float animation
   useEffect(() => {
@@ -204,25 +234,43 @@ export default function GameShell({ user }: Props) {
               {[
                 { label: "Hari Bertahan", val: game.day + " hari" },
                 { label: "Total Profit", val: fmt(game.totalProfit) },
-                { label: "Level", val: "Lv." + game.level },
+                { label: "Efisiensi", val: fmt(Math.round(game.totalProfit / game.day)) + "/hari" },
                 { label: "Kesulitan", val: cfg.label },
-              ].map((item) => (
+                { label: "NPL Akhir", val: game.npl.toFixed(1) + "%", color: game.npl <= 3 ? "#22c55e" : game.npl <= 5 ? "#f59e0b" : "#ef4444" },
+                { label: "Reputasi Akhir", val: game.reputation + "%", color: game.reputation >= 70 ? "#22c55e" : "#f59e0b" },
+              ].map((item: any) => (
                 <div key={item.label} style={{ background: "#0d0d14", borderRadius: 8, padding: "8px 10px" }}>
                   <div style={{ fontSize: 9, color: "#555" }}>{item.label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#ddd", fontFamily: "monospace" }}>{item.val}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: item.color || "#ddd", fontFamily: "monospace" }}>{item.val}</div>
                 </div>
               ))}
             </div>
-            <button
-              onClick={() => setShowDifficulty(true)}
-              style={{
-                width: "100%", padding: 12, borderRadius: 10, border: "none",
-                background: "linear-gradient(135deg,#c8a96e,#8a6030)",
-                color: "#000", fontWeight: 800, fontSize: 14, cursor: "pointer",
-              }}
-            >
-              🔄 Main Lagi
-            </button>
+            {game.gameWon && (
+              <div style={{ fontSize: 11, color: "#22c55e", marginBottom: 12, background: "#22c55e11", borderRadius: 8, padding: "8px 12px" }}>
+                🏆 Skor otomatis tersimpan ke Leaderboard Global!
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setShowDifficulty(true)}
+                style={{
+                  flex: 1, padding: 12, borderRadius: 10, border: "none",
+                  background: "linear-gradient(135deg,#c8a96e,#8a6030)",
+                  color: "#000", fontWeight: 800, fontSize: 14, cursor: "pointer",
+                }}
+              >
+                🔄 Main Lagi
+              </button>
+              {game.gameWon && (
+                <Link href="/leaderboard" style={{
+                  flex: 1, padding: 12, borderRadius: 10, border: "1px solid #c8a96e44",
+                  background: "transparent", color: "#c8a96e", fontWeight: 700, fontSize: 13,
+                  cursor: "pointer", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  📊 Lihat Ranking
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}

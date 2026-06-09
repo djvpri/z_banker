@@ -78,6 +78,11 @@ export default function AntrianTab() {
 function CustomerCard({ c, staff, onAction }: { c: Customer; staff: ReturnType<typeof useGameStore.getState>["staff"]; onAction: (c: Customer, action: "accept" | "reject") => void }) {
   const isLoan = isLoanType(c.type);
   const risky = isLoan && (c.score < 500 || c.risk > 70);
+  const riskTier: "high" | "medium" | "low" = (c.score < 500 || c.risk > 70) ? "high" : (c.score < 650 || c.risk > 45) ? "medium" : "low";
+  const hasCollateral = !!(c.collateral && c.collateralValue > 0);
+  const collateralMod = hasCollateral ? 0.5 : 1.0;
+  const baseDefault = riskTier === "high" ? 0.05 : riskTier === "medium" ? 0.02 : 0.006;
+  const monthlyRisk = (baseDefault * collateralMod * 100).toFixed(1);
   const isVip = c.type === "Deposito Korporat";
   const icon = c.type === "Deposito" ? "💰" : c.type === "Buka Rekening" ? "📋" : c.type === "Deposito Korporat" ? "🏛️" : c.type === "Pinjaman KPR" ? "🏠" : "📄";
 
@@ -148,11 +153,20 @@ function CustomerCard({ c, staff, onAction }: { c: Customer; staff: ReturnType<t
                 )}
               </div>
               {analyst && <Bar val={analyst.workload} max={100} color="#f59e0b" height={3} />}
-              <div style={{ fontSize: 9, color: "#555", marginTop: 3 }}>
-                NPL impact: <span style={{ color: risky ? "#ef4444" : "#22c55e" }}>
-                  {risky ? "+" + Math.max(0.05, 0.4 - ((analyst ? analyst.skill : 3) - 3) * 0.04).toFixed(2) + "%" : "±0%"}
+              <div style={{ fontSize: 9, color: "#555", marginTop: 3, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span>
+                  Risiko bulanan:{" "}
+                  <span style={{ color: riskTier === "high" ? "#ef4444" : riskTier === "medium" ? "#f59e0b" : "#22c55e", fontFamily: "monospace" }}>
+                    ~{monthlyRisk}%
+                  </span>
+                  {" "}gagal bayar
                 </span>
-                {risky && analyst && analyst.skill >= 7 && <span style={{ color: "#22c55e" }}> (skill tinggi mitigasi risiko)</span>}
+                {hasCollateral && (
+                  <span style={{ color: "#22c55e" }}>🏠 Kolateral memotong risiko 50%</span>
+                )}
+                {!hasCollateral && riskTier !== "low" && (
+                  <span style={{ color: "#f59e0b" }}>⚠️ Tanpa kolateral</span>
+                )}
               </div>
             </div>
           )}

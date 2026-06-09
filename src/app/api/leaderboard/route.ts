@@ -39,12 +39,15 @@ export async function GET(req: Request) {
 
 const SubmitSchema = z.object({
   playerName: z.string().min(1).max(30),
+  bankName: z.string().min(1).max(40).default("Bank Nusantara"),
   totalProfit: z.number(),
   day: z.number().int(),
   level: z.number().int(),
   difficulty: z.enum(["easy", "normal", "hard"]),
   branch: z.string(),
   achievements: z.number().int(),
+  npl: z.number().min(0).max(100).default(0),
+  reputation: z.number().int().min(0).max(100).default(0),
 });
 
 export async function POST(req: Request) {

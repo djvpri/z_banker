@@ -68,15 +68,21 @@ export default function InvestasiTab() {
         const o = INVESTMENT_OPTIONS.find((x) => x.id === inv.instrument);
         if (!o) return null;
         const daysHeld = game.day - inv.startDay;
-        const earned = Math.floor(((inv.amount * (o.rateAnnual / 100)) / 365) * daysHeld);
+        const dailyEst = Math.floor((inv.amount * (o.rateAnnual / 100)) / 365);
+        const earned = Math.floor(dailyEst * daysHeld);
         return (
           <div key={inv.id} style={{ background: "#0e0e18", border: `1px solid ${riskColor(o.risk)}22`, borderRadius: 10, padding: 12, marginBottom: 7, display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 20 }}>{o.icon}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, color: "#ddd", fontSize: 12 }}>{o.name}</div>
-              <div style={{ fontSize: 10, color: "#555" }}>{fmt(inv.amount)} · {daysHeld} hari · Return: <span style={{ color: "#22c55e" }}>+{fmt(earned)}</span></div>
+              <div style={{ fontSize: 10, color: "#555" }}>
+                {fmt(inv.amount)} · {daysHeld === 0 ? "baru diinvestasikan" : daysHeld + " hari"} ·{" "}
+                {daysHeld === 0
+                  ? <span style={{ color: "#60a5fa" }}>Est. harian: +{fmt(dailyEst)}</span>
+                  : <span style={{ color: "#22c55e" }}>Return: +{fmt(earned)}</span>}
+              </div>
             </div>
-            <button onClick={() => handleWithdrawInvest(inv.id)}
+            <button onClick={() => handleWithdrawInvest(String(inv.id))}
               style={{ background: "#ef444418", border: "1px solid #ef444433", color: "#ef4444", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 11 }}>
               Cairkan
             </button>

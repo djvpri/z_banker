@@ -153,17 +153,15 @@ export function useGameActions() {
     }
   }, [addNotif, handleNegotiationAccept]);
 
-  const handleEarlyRepayment = useCallback((loanId: number) => {
+  const processEarlyRepay = useCallback((loanId: number) => {
     const { loanPortfolio } = useGameStore.getState();
     const { setLoanPortfolio, setGame } = useGameStore.getState();
     const loan = loanPortfolio.find((l) => l.id === loanId);
     if (!loan) return;
     const remainingMonths = loan.tenor - loan.paidMonths;
     const remainingPrincipal = Math.floor(loan.amount * (remainingMonths / loan.tenor));
-    // Bunga yang akan hilang: pokok sisa × rate bulanan × sisa bulan
     const monthlyRate = loan.rate / 100 / 12;
     const lostInterest = Math.floor(remainingPrincipal * monthlyRate * remainingMonths);
-    // Penalti lebih besar jika dilunasi sangat awal (>50% sisa tenor)
     const penaltyRate = remainingMonths / loan.tenor > 0.5 ? 0.03 : 0.015;
     const penalty = Math.floor(remainingPrincipal * penaltyRate);
     const cashReceived = remainingPrincipal + penalty;
@@ -176,6 +174,37 @@ export function useGameActions() {
       (netLoss > 0 ? " | ⚠️ Bunga hilang -" + fmt(netLoss) : " | ✅ Penalti > bunga hilang"),
       netLoss > penalty ? "warning" : "success"
     );
+  }, [addNotif]);
+
+  const handleSendOffer = useCallback((loanId: number) => {
+    const { earlyRepayOffers, earlyRepayRequests, game } = useGameStore.getState();
+    const { setEarlyRepayOffers, setEarlyRepayRequests } = useGameStore.getState();
+    if (earlyRepayOffers.some((o) => o.loanId === loanId)) {
+      addNotif("⏳ Penawaran sudah dikirim, tunggu jawaban debitur.", "info");
+      return;
+    }
+    if (earlyRepayRequests.some((r) => r.loanId === loanId)) {
+      processEarlyRepay(loanId);
+      setEarlyRepayRequests((r) => r.filter((x) => x.loanId !== loanId));
+      return;
+    }
+    setEarlyRepayOffers((o) => o.concat([{ loanId, sentDay: game.day }]));
+    addNotif("📨 Penawaran pelunasan awal dikirim ke debitur. Jawaban esok hari.", "info");
+  }, [addNotif, processEarlyRepay]);
+
+  const handleAcceptRequest = useCallback((loanId: number) => {
+    const { setEarlyRepayRequests } = useGameStore.getState();
+    processEarlyRepay(loanId);
+    setEarlyRepayRequests((r) => r.filter((x) => x.loanId !== loanId));
+  }, [processEarlyRepay]);
+
+  const handleRejectRequest = useCallback((loanId: number) => {
+    const { loanPortfolio, earlyRepayRequests } = useGameStore.getState();
+    const { setEarlyRepayRequests } = useGameStore.getState();
+    const req = earlyRepayRequests.find((r) => r.loanId === loanId);
+    const loan = loanPortfolio.find((l) => l.id === loanId);
+    if (req && loan) addNotif("❌ Permintaan pelunasan " + loan.debtor + " ditolak.", "warning");
+    setEarlyRepayRequests((r) => r.filter((x) => x.loanId !== loanId));
   }, [addNotif]);
 
   const handleSeizeCollateral = useCallback((loanId: number) => {
@@ -252,25 +281,25 @@ export function useGameActions() {
     const { setGame, setInvestments } = useGameStore.getState();
     const opt = INVESTMENT_OPTIONS.find((o) => o.id === instrumentId);
     if (!opt) return;
-    if (amount < opt.minAmount) { addNotif("❌ Minimal investasi " + fmt(opt.minAmount), "danger"); return; }
+    if (!amount || amount < opt.minAmount) { addNotif("❌ Minimal investasi " + fmt(opt.minAmount), "danger"); return; }
     if (game.cash < amount) { addNotif("❌ Kas tidak cukup!", "danger"); return; }
     setGame((g) => ({ ...g, cash: g.cash - amount }));
-    setInvestments((inv) => inv.concat([{ id: Date.now(), instrument: instrumentId, amount, startDay: game.day }]));
+    setInvestments((inv) => inv.concat([{ id: String(Date.now()), instrument: instrumentId, amount, startDay: game.day }]));
     addNotif("📈 Investasi " + fmt(amount) + " ke " + opt.name + " berhasil!", "success");
   }, [addNotif]);
 
-  const handleWithdrawInvest = useCallback((invId: number) => {
+  const handleWithdrawInvest = useCallback((invId: string) => {
     const { investments, game } = useGameStore.getState();
     const { setGame, setInvestments } = useGameStore.getState();
-    const inv = investments.find((i) => i.id === invId);
-    if (!inv) return;
+    const inv = investments.find((i) => String(i.id) === invId);
+    if (!inv) { addNotif("⚠️ Data investasi tidak ditemukan", "danger"); return; }
     const opt = INVESTMENT_OPTIONS.find((o) => o.id === inv.instrument);
     if (!opt) return;
     const daysHeld = game.day - inv.startDay;
     const earned = Math.floor((inv.amount * (opt.rateAnnual / 100) / 365) * daysHeld);
     const returned = inv.amount + earned;
     setGame((g) => ({ ...g, cash: g.cash + returned }));
-    setInvestments((i) => i.filter((x) => x.id !== invId));
+    setInvestments((i) => i.filter((x) => String(x.id) !== invId));
     addNotif("💰 Investasi dicairkan: " + fmt(returned) + " (return " + fmt(earned) + ")", "success");
   }, [addNotif]);
 
@@ -358,13 +387,18 @@ export function useGameActions() {
   }, [addNotif]);
 
   const handleHire = useCallback((role: StaffRole) => {
-    const { game } = useGameStore.getState();
+    const { game, staff } = useGameStore.getState();
     const { setGame, setStaff, setShowHire } = useGameStore.getState();
+    const maxStaff = BRANCHES[game.branch]?.maxStaff ?? 5;
+    if (staff.length >= maxStaff) {
+      addNotif("❌ Kapasitas staf penuh (" + maxStaff + " maks untuk " + BRANCHES[game.branch].name + "). Upgrade cabang dulu!", "danger");
+      return;
+    }
     if (game.cash < 5 * M) { addNotif("❌ Kas tidak cukup!", "danger"); return; }
     const ns = genStaff(role);
     setStaff((s) => s.concat([ns]));
     setGame((g) => ({ ...g, cash: g.cash - 5 * M }));
-    addNotif("✅ " + ns.name + " bergabung sebagai " + STAFF_ROLES[role].label + "!", "success");
+    addNotif("✅ " + ns.name + " bergabung sebagai " + STAFF_ROLES[role].label + "! (" + (staff.length + 1) + "/" + maxStaff + ")", "success");
     setShowHire(false);
   }, [addNotif]);
 
@@ -490,7 +524,7 @@ export function useGameActions() {
 
   return {
     handleCustomer, handleNegotiationAccept, handleNegotiationReject, handleNegotiationCounter,
-    handleEarlyRepayment, handleSeizeCollateral,
+    handleSendOffer, handleAcceptRequest, handleRejectRequest, handleSeizeCollateral,
     handleTrain, handlePromote, handleRest, handleFire, handleFraud, handleHire,
     handleApproach, handleConvert, handleDismissProspect,
     handleInvest, handleWithdrawInvest,

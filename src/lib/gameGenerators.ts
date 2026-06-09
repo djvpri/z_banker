@@ -9,13 +9,12 @@ import {
   BANK_NAMES, BANK_SPECIALITIES, BANK_STRATEGIES,
 } from "./gameConstants";
 
-let _pid = 100;
 export function genProspect(): Prospect {
   const product = pick(PROSPECT_PRODUCTS);
   const isLoan = product.includes("Kredit") || product.includes("Pinjaman") || product.includes("KPR") || product.includes("KTA");
   const potential = isLoan ? rnd(50, 800) * M : rnd(20, 300) * M;
   return {
-    id: ++_pid,
+    id: Date.now() + Math.random(),
     name: pick(PROSPECT_NAMES),
     sector: pick(PROSPECT_SECTORS),
     product,
@@ -58,14 +57,13 @@ export function genLoanCustomer(day: number, branch: number): Customer {
   };
 }
 
-let _bankId = 0;
 export function genCompetitor(day: number): Competitor {
   const spec = pick(BANK_SPECIALITIES);
   const strat = pick(BANK_STRATEGIES);
   const startRep = rnd(35, 70);
   const startDep = rnd(100, 400) * M;
   return {
-    id: ++_bankId,
+    id: Date.now() + Math.random(),
     name: pick(BANK_NAMES),
     speciality: spec,
     strategy: strat,
