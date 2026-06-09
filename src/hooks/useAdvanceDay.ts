@@ -23,6 +23,7 @@ export function useAdvanceDay() {
   const advanceDay = useCallback(() => {
     const {
       game, staff, customers, rates, activeProducts, investments, branches, lpsEnabled,
+      loanPortfolio, savingsPortfolio,
     } = useGameStore.getState();
     const {
       setStaff, setLoanPortfolio, setCreditPipeline, setSavingsPortfolio, setGame,
@@ -453,9 +454,17 @@ export function useAdvanceDay() {
 
     // ── Analytics tracking ───────────────────────────────────────────────────
     setAnalyticsData((prev) => {
-      const retail = customers.filter((c) => !c.isLoan || ["Pinjaman KTA", "Buka Rekening", "Deposito"].indexOf(c.type) >= 0).length;
-      const umkm = customers.filter((c) => c.type === "Pinjaman Usaha").length;
-      const korporat = customers.filter((c) => ["Deposito Korporat", "KPR"].indexOf(c.type) >= 0).length;
+      const retailTypes = ["Pinjaman KTA", "KTA Multiguna", "Tabungan Reguler", "Deposito", "Deposito Reguler", "Buka Rekening"];
+      const umkmTypes = ["Pinjaman Usaha", "Tabungan Bisnis", "Kredit Modal Kerja"];
+      const korporatTypes = ["Deposito Korporat", "Pinjaman KPR", "KPR Premium", "Kredit Investasi"];
+
+      const retail = loanPortfolio.filter((l) => retailTypes.some((t) => l.type.includes(t))).length
+        + savingsPortfolio.filter((s) => retailTypes.some((t) => s.type.includes(t))).length;
+      const umkm = loanPortfolio.filter((l) => umkmTypes.some((t) => l.type.includes(t))).length
+        + savingsPortfolio.filter((s) => umkmTypes.some((t) => s.type.includes(t))).length;
+      const korporat = loanPortfolio.filter((l) => korporatTypes.some((t) => l.type.includes(t))).length
+        + savingsPortfolio.filter((s) => korporatTypes.some((t) => s.type.includes(t))).length;
+
       const newSeg = prev.segmentHistory.concat([{ day: currentDay, retail, umkm, korporat }]).slice(-30);
 
       const dayOfWeek = currentDay % 7;
