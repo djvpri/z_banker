@@ -125,6 +125,7 @@ interface GameStore {
   setTutorialStep: (step: number) => void;
   toggleMute: () => void;
   resetGame: (difficulty: Difficulty) => void;
+  loadGame: (gs: Record<string, any>) => void;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -208,6 +209,39 @@ export const useGameStore = create<GameStore>()(
       setShowTutorial: (v) => set({ showTutorial: v }),
       setTutorialStep: (step) => set({ tutorialStep: step }),
       toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
+      loadGame: (gs) => set({
+        game: gs.game ?? undefined,
+        staff: gs.staff ?? undefined,
+        rates: gs.rates ?? undefined,
+        loanPortfolio: gs.loanPortfolio ?? [],
+        savingsPortfolio: gs.savingsPortfolio ?? [],
+        investments: gs.investments ?? [],
+        activeProducts: gs.activeProducts ?? ["tabungan_reguler", "kpr"],
+        branches: gs.branches ?? [],
+        acquired: gs.acquired ?? [],
+        lpsEnabled: gs.lpsEnabled ?? false,
+        achievements: gs.achievements ?? [],
+        profitHistory: gs.profitHistory ?? [],
+        weeklyReports: gs.weeklyReports ?? [],
+        eventLog: gs.eventLog ?? [],
+        notifs: [],
+        negotiation: null,
+        fraudEvent: null,
+        showHire: false,
+        showWeeklyReport: null,
+        activeEvent: null,
+        reviewModal: null,
+        predictiveWarnings: [],
+        customers: [],
+        prospects: [],
+        competitors: [],
+        creditPipeline: [],
+        stressResult: null,
+        bmpkLog: [],
+        tutorialStep: 0,
+        showTutorial: false,
+        activeTab: "dashboard",
+      }),
       resetGame: (difficulty) => set({
         game: makeInitGame(difficulty),
         staff: initialStaff(),

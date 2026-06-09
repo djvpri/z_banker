@@ -56,6 +56,7 @@ export default function GameShell({ user }: Props) {
   const setShowHire = useGameStore((s) => s.setShowHire);
   const rates = useGameStore((s) => s.rates);
 
+  const loadGame = useGameStore((s) => s.loadGame);
   const { save } = useAutoSave(1);
   const { play } = useSound();
   const {
@@ -72,11 +73,27 @@ export default function GameShell({ user }: Props) {
     document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
-  // Show difficulty modal on first load if game just started
+  // Load save from database on mount
   useEffect(() => {
-    if (game.day === 1 && !game.tutorialDone) {
-      setShowDifficulty(true);
+    async function loadFromDB() {
+      try {
+        const res = await fetch("/api/game/save");
+        if (!res.ok) {
+          setShowDifficulty(true);
+          return;
+        }
+        const saves: { slot: number; day: number; gameState: Record<string, any> }[] = await res.json();
+        const latest = saves.find((s) => s.slot === 1);
+        if (latest && latest.day > 1) {
+          loadGame(latest.gameState);
+        } else {
+          setShowDifficulty(true);
+        }
+      } catch {
+        setShowDifficulty(true);
+      }
     }
+    loadFromDB();
   }, []);
 
   // Auto-save every time day changes
