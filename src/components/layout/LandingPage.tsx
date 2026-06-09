@@ -97,27 +97,58 @@ export default function LandingPage() {
         </motion.div>
 
         {/* CTA */}
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.7, type: "spring" }}
-          whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(200,169,110,0.3)" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          style={{
-            background: "linear-gradient(135deg, #c8a96e, #8a6030)",
-            color: "#000",
-            border: "none",
-            borderRadius: 12,
-            padding: "14px 40px",
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: "pointer",
-            letterSpacing: 0.5,
-          }}
+          style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}
         >
-          🚀 Mulai Bermain dengan Google
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(200,169,110,0.3)" }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            style={{
+              background: "linear-gradient(135deg, #c8a96e, #8a6030)",
+              color: "#000",
+              border: "none",
+              borderRadius: 12,
+              padding: "14px 40px",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: 0.5,
+              width: 280,
+            }}
+          >
+            🔵 Masuk dengan Google
+          </motion.button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, width: 280 }}>
+            <div style={{ flex: 1, height: 1, background: "#2a2a3a" }} />
+            <span style={{ fontSize: 11, color: "#444" }}>atau</span>
+            <div style={{ flex: 1, height: 1, background: "#2a2a3a" }} />
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.03, boxShadow: "0 0 20px rgba(200,169,110,0.1)" }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => window.location.href = "/auth/signin"}
+            style={{
+              background: "transparent",
+              color: "#c8a96e",
+              border: "1px solid rgba(200,169,110,0.4)",
+              borderRadius: 12,
+              padding: "13px 40px",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: 0.5,
+              width: 280,
+            }}
+          >
+            ✉️ Masuk dengan Email
+          </motion.button>
+        </motion.div>
 
         <p style={{ color: "#333", fontSize: 11, marginTop: 16 }}>
           Progress tersimpan otomatis · Gratis selamanya
