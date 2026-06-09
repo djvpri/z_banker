@@ -204,6 +204,7 @@ export interface GameState {
   difficulty: Difficulty;
   tutorialStep: number;
   tutorialDone: boolean;
+  bankName: string;
 }
 
 export interface DailyChallengeData {

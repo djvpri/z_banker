@@ -29,6 +29,7 @@ interface Props {
 
 export default function GameShell({ user }: Props) {
   const game = useGameStore((s) => s.game);
+  const setGame = useGameStore((s) => s.setGame);
   const activeTab = useGameStore((s) => s.activeTab);
   const setActiveTab = useGameStore((s) => s.setActiveTab);
   const darkMode = useGameStore((s) => s.darkMode);
@@ -67,6 +68,8 @@ export default function GameShell({ user }: Props) {
 
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [coinFloats, setCoinFloats] = useState<{ id: number; x: number }[]>([]);
+  const [editingBankName, setEditingBankName] = useState(false);
+  const [bankNameInput, setBankNameInput] = useState("");
 
   // Apply dark/light mode
   useEffect(() => {
@@ -273,14 +276,44 @@ export default function GameShell({ user }: Props) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 22 }}>🏦</span>
           <div>
-            <div style={{
-              fontWeight: 800, fontSize: 15, letterSpacing: 0.5,
-              background: "linear-gradient(135deg, #c8a96e, #e8c88e)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}>
-              Z Banker
-            </div>
+            {editingBankName ? (
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const name = bankNameInput.trim();
+                if (name) setGame((g) => ({ ...g, bankName: name }));
+                setEditingBankName(false);
+              }} style={{ display: "flex", gap: 4 }}>
+                <input
+                  autoFocus
+                  value={bankNameInput}
+                  onChange={(e) => setBankNameInput(e.target.value)}
+                  maxLength={30}
+                  onBlur={() => {
+                    const name = bankNameInput.trim();
+                    if (name) setGame((g) => ({ ...g, bankName: name }));
+                    setEditingBankName(false);
+                  }}
+                  style={{
+                    background: "#1a1a2e", border: "1px solid #c8a96e55",
+                    borderRadius: 5, color: "#c8a96e", fontSize: 13,
+                    fontWeight: 700, padding: "2px 6px", width: 140, outline: "none",
+                  }}
+                />
+              </form>
+            ) : (
+              <div
+                onClick={() => { setBankNameInput(game.bankName || "Bank Nusantara"); setEditingBankName(true); }}
+                title="Klik untuk ubah nama bank"
+                style={{
+                  fontWeight: 800, fontSize: 14, letterSpacing: 0.3,
+                  background: "linear-gradient(135deg, #c8a96e, #e8c88e)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                  cursor: "pointer",
+                }}
+              >
+                {game.bankName || "Bank Nusantara"} ✏️
+              </div>
+            )}
             <div style={{ fontSize: 9, color: "#555" }}>
               D{game.day} · Lv.{game.level}
               <span style={{ color: cfg.color, marginLeft: 6 }}>· {cfg.label}</span>

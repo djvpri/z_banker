@@ -40,6 +40,7 @@ function makeInitGame(difficulty: Difficulty): GameState {
     profit: 0, totalProfit: 0, gameOver: false, gameWon: false,
     branch: 0, level: 1, difficulty,
     tutorialStep: 0, tutorialDone: false,
+    bankName: "Bank Nusantara",
   };
 }
 
