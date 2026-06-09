@@ -172,7 +172,7 @@ export default function LandingPage() {
           <span style={{ color: "#25d366" }}>●</span> WhatsApp
         </a>
         <a
-          href="https://www.linkedin.com/in/muhammad-adi-juprianto"
+          href="https://www.linkedin.com/in/muhammad-andi-juprianto-s-pd-mm-380745192"
           target="_blank" rel="noopener noreferrer"
           style={{ color: "#555", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}
         >
