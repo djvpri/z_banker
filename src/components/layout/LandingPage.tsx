@@ -155,6 +155,37 @@ export default function LandingPage() {
         </p>
       </motion.div>
 
+      {/* Footer kontak */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        borderTop: "1px solid #1a1a2e",
+        padding: "14px 24px",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 24, flexWrap: "wrap",
+      }}>
+        <span style={{ color: "#333", fontSize: 11 }}>© Muhammad Adi Juprianto</span>
+        <a
+          href="https://wa.me/6282153533164"
+          target="_blank" rel="noopener noreferrer"
+          style={{ color: "#555", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}
+        >
+          <span style={{ color: "#25d366" }}>●</span> WhatsApp
+        </a>
+        <a
+          href="https://www.linkedin.com/in/muhammad-adi-juprianto"
+          target="_blank" rel="noopener noreferrer"
+          style={{ color: "#555", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}
+        >
+          <span style={{ color: "#0077b5" }}>●</span> LinkedIn
+        </a>
+        <a
+          href="mailto:sentarummedia@gmail.com"
+          style={{ color: "#555", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}
+        >
+          <span style={{ color: "#c8a96e" }}>●</span> sentarummedia@gmail.com
+        </a>
+      </div>
+
       <style>{`
         @keyframes goldShimmer {
           0% { background-position: -200% center; }
