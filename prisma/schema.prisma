@@ -43,11 +43,14 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  friendCode    String?      @unique
   createdAt     DateTime     @default(now())
   accounts      Account[]
   sessions      Session[]
   gameSaves     GameSave[]
   scores        LeaderboardEntry[]
+  sentFriendRequests     Friendship[] @relation("FriendRequester")
+  receivedFriendRequests Friendship[] @relation("FriendAddressee")
 }
 
 model VerificationToken {
@@ -93,6 +96,20 @@ model LeaderboardEntry {
   submittedAt DateTime @default(now())
 
   @@index([totalProfit(sort: Desc)])
+}
+
+// ── Pertemanan ────────────────────────────────────────────────────────────────
+model Friendship {
+  id          String   @id @default(cuid())
+  requesterId String
+  requester   User     @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId String
+  addressee   User     @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status      String   @default("pending") // pending | accepted
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([requesterId, addresseeId])
 }
 
 // ── Daily Challenge ───────────────────────────────────────────────────────────

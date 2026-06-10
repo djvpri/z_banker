@@ -19,6 +19,7 @@ import KompetitorTab from "./KompetitorTab";
 import RegulasiTab from "./RegulasiTab";
 import EkspansiTab from "./EkspansiTab";
 import ProdukTab from "./ProdukTab";
+import SosialTab from "./SosialTab";
 
 export const TAB_COMPONENTS: Record<string, ComponentType> = {
   dashboard: DashboardTab,
@@ -38,4 +39,5 @@ export const TAB_COMPONENTS: Record<string, ComponentType> = {
   regulasi: RegulasiTab,
   ekspansi: EkspansiTab,
   produk: ProdukTab,
+  sosial: SosialTab,
 };
