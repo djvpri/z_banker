@@ -333,7 +333,11 @@ export function useAdvanceDay() {
       const target = Math.max(0.5, portfolioNpl);
       // Recovery (turun) lebih cepat dari kenaikan supaya semua-lancar terasa responsif
       const driftRate = target < prev.npl ? 0.65 : 0.35;
-      const drift = (target - prev.npl) * driftRate;
+      const rawDrift = (target - prev.npl) * driftRate;
+      // Cap perubahan harian — portofolio kecil bisa membuat target melompat drastis
+      // (1 kredit macet = lonjakan besar % portofolio); batasi agar NPL naik/turun bertahap
+      const maxStep = target < prev.npl ? 2.5 : 1.5;
+      const drift = clamp(rawDrift, -maxStep, maxStep);
       const newNpl = clamp(prev.npl + drift + (Math.random() - 0.5) * 0.1 - ts.nplMod * 0.05, 0.5, 15);
       const newRep = clamp(prev.reputation + (Math.random() > 0.5 ? 1 : -1) + (ts.repMod > 0 ? 1 : 0), 0, 100);
       const newLdr = prev.deposits > 0 ? Math.round((prev.loans / prev.deposits) * 100) : 0;
