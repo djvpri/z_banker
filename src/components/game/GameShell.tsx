@@ -91,7 +91,7 @@ export default function GameShell({ user }: Props) {
         }
         const saves: { slot: number; day: number; gameState: Record<string, any> }[] = await res.json();
         const latest = saves.find((s) => s.slot === 1);
-        if (latest && latest.day > 1) {
+        if (latest && latest.gameState?.game) {
           loadGame(latest.gameState);
         } else {
           setShowDifficulty(true);
@@ -151,6 +151,8 @@ export default function GameShell({ user }: Props) {
     setShowDifficulty(false);
     setShowTutorial(true);
     play("success");
+    // Simpan langsung agar save lama (mis. game over) tidak ter-load lagi saat reload
+    save();
   }
 
   function handleNextDay() {
