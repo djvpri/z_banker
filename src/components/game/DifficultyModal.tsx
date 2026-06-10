@@ -2,15 +2,18 @@
 "use client";
 import { motion } from "framer-motion";
 import { Difficulty, DIFFICULTY_CONFIG } from "@/types/game";
+import { SCENARIOS } from "@/lib/gameConstants";
 import { useGameStore } from "@/store/gameStore";
 import { useState } from "react";
 
 interface Props {
-  onStart: (difficulty: Difficulty) => void;
+  onStart: (difficulty: Difficulty, scenarioId: string) => void;
 }
 
 export default function DifficultyModal({ onStart }: Props) {
   const [selected, setSelected] = useState<Difficulty>("normal");
+  const [selectedScenario, setSelectedScenario] = useState("normal");
+  const careerWins = useGameStore((s) => s.careerWins);
 
   return (
     <div style={{
@@ -27,6 +30,8 @@ export default function DifficultyModal({ onStart }: Props) {
           padding: 32,
           maxWidth: 400,
           width: "100%",
+          maxHeight: "90vh",
+          overflowY: "auto",
           textAlign: "center",
         }}
       >
@@ -34,11 +39,16 @@ export default function DifficultyModal({ onStart }: Props) {
         <h2 style={{ fontSize: 22, fontWeight: 800, color: "#c8a96e", marginBottom: 6 }}>
           Z Banker
         </h2>
-        <p style={{ color: "#555", fontSize: 12, marginBottom: 28 }}>
+        <p style={{ color: "#555", fontSize: 12, marginBottom: careerWins > 0 ? 8 : 28 }}>
           Pilih tingkat kesulitan untuk memulai
         </p>
+        {careerWins > 0 && (
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#c8a96e", background: "#c8a96e18", borderRadius: 8, padding: "5px 10px", marginBottom: 20, display: "inline-block" }}>
+            🏅 Kemenangan Karir: {careerWins}
+          </div>
+        )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
           {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG["easy"]][]).map(([key, cfg]) => (
             <motion.button
               key={key}
@@ -73,10 +83,45 @@ export default function DifficultyModal({ onStart }: Props) {
           ))}
         </div>
 
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#c8a96e", textAlign: "left", marginBottom: 8 }}>
+          🎯 Mode Skenario
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 28 }}>
+          {SCENARIOS.map((sc) => {
+            const unlocked = careerWins >= sc.unlockWins;
+            const isSelected = selectedScenario === sc.id;
+            return (
+              <motion.button
+                key={sc.id}
+                whileHover={unlocked ? { scale: 1.02 } : undefined}
+                whileTap={unlocked ? { scale: 0.98 } : undefined}
+                onClick={() => unlocked && setSelectedScenario(sc.id)}
+                style={{
+                  background: isSelected ? "#c8a96e18" : "#0d0d14",
+                  border: `2px solid ${isSelected ? "#c8a96e" : "#1a1a2e"}`,
+                  borderRadius: 12,
+                  padding: "10px 12px",
+                  cursor: unlocked ? "pointer" : "default",
+                  textAlign: "left",
+                  opacity: unlocked ? 1 : 0.45,
+                  transition: "all 0.15s",
+                }}
+              >
+                <div style={{ fontWeight: 700, color: isSelected ? "#c8a96e" : "#aaa", fontSize: 12, marginBottom: 3 }}>
+                  {sc.icon} {sc.name}
+                </div>
+                <div style={{ fontSize: 10, color: "#555", lineHeight: 1.4 }}>
+                  {unlocked ? sc.desc : `🔒 Menang ${sc.unlockWins}x untuk membuka`}
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onStart(selected)}
+          onClick={() => onStart(selected, selectedScenario)}
           style={{
             width: "100%",
             background: "linear-gradient(135deg, #c8a96e, #8a6030)",

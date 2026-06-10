@@ -32,6 +32,7 @@ export function useAdvanceDay() {
       setPredictiveWarnings, setReviewModal, setCompetitors, setCustomers,
       setEventLog, setActiveEvent, setFraudEvent, setProspects, setAnalyticsData,
       setEarlyRepayRequests, setEarlyRepayOffers, setBranches, setActiveProducts, setPendingProducts,
+      setCareerWins,
     } = useGameStore.getState();
 
     const currentDay = game.day;
@@ -373,6 +374,11 @@ export function useAdvanceDay() {
         level: Math.floor(Math.max(0, newTP) / B) + 1,
         econPhase, econPhaseUntil,
       };
+
+      // ── New Game+: catat kemenangan karir saat transisi ke gameWon ─────────
+      if (!prev.gameWon && nextState.gameWon) {
+        setCareerWins((c) => c + 1);
+      }
 
       // ── Weekly report every 7 days ─────────────────────────────────────────
       if (prev.day > 0 && prev.day % 7 === 0) {

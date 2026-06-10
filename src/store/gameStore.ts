@@ -8,7 +8,7 @@ import {
   Notif, Negotiation, FraudEvent, GameEvent, ReviewModalData, PredictiveWarning,
   EarlyRepayRequest, EarlyRepayOffer, PendingProduct, QuarterlyKpiResult,
 } from "@/types/game";
-import { STAFF_ROLES } from "@/lib/gameConstants";
+import { STAFF_ROLES, SCENARIOS } from "@/lib/gameConstants";
 
 const M = 1_000_000;
 const B = 1_000_000_000;
@@ -50,16 +50,21 @@ export function genCandidatePool(role: Staff["role"], count = 3): Candidate[] {
   return Array.from({ length: count }, () => genCandidate(role));
 }
 
-function makeInitGame(difficulty: Difficulty): GameState {
+function makeInitGame(difficulty: Difficulty, scenarioId: string = "normal"): GameState {
   const cfg = DIFFICULTY_CONFIG[difficulty];
+  const sc = SCENARIOS.find((s) => s.id === scenarioId) ?? SCENARIOS[0];
+  const deposits = Math.round(200 * M * sc.depositMult);
+  const loans = Math.round(150 * M * sc.loanMult);
   return {
-    day: 1, cash: cfg.startCash, deposits: 200*M, loans: 150*M,
-    reputation: 60, npl: 0.5, car: 18.5, ldr: 75, nim: 3.2,
+    day: 1, cash: Math.round(cfg.startCash * sc.cashMult), deposits, loans,
+    reputation: clamp(60 + sc.reputationDelta, 0, 100), npl: sc.npl, car: sc.car,
+    ldr: Math.round((loans / deposits) * 100), nim: 3.2,
     profit: 0, totalProfit: 0, gameOver: false, gameWon: false,
     branch: 0, level: 1, difficulty,
     tutorialStep: 0, tutorialDone: false,
     bankName: "Bank Nusantara",
-    econPhase: "normal", econPhaseUntil: rnd(20, 35),
+    econPhase: sc.econPhase, econPhaseUntil: rnd(20, 35),
+    scenarioId: sc.id,
   };
 }
 
@@ -98,6 +103,9 @@ interface GameStore {
   bmpkLog: Array<{ day: number; status: string; violations: number }>;
   stressResult: any | null;
   achievements: string[];
+
+  // New Game+ progression (persists across resetGame)
+  careerWins: number;
 
   // Reports & analytics
   profitHistory: Array<{ day: number; profit: number }>;
@@ -147,6 +155,7 @@ interface GameStore {
   setProfitHistory: (updater: (h: any[]) => any[]) => void;
   setWeeklyReports: (updater: (wr: WeeklyReport[]) => WeeklyReport[]) => void;
   setQuarterlyReports: (updater: (qr: QuarterlyKpiResult[]) => QuarterlyKpiResult[]) => void;
+  setCareerWins: (updater: (c: number) => number) => void;
   setEventLog: (updater: (el: EventLogEntry[]) => EventLogEntry[]) => void;
   setAnalyticsData: (updater: (a: AnalyticsData) => AnalyticsData) => void;
   setActiveTab: (tab: string) => void;
@@ -154,7 +163,7 @@ interface GameStore {
   setShowTutorial: (v: boolean) => void;
   setTutorialStep: (step: number) => void;
   toggleMute: () => void;
-  resetGame: (difficulty: Difficulty) => void;
+  resetGame: (difficulty: Difficulty, scenarioId?: string) => void;
   loadGame: (gs: Record<string, any>) => void;
 }
 
@@ -190,6 +199,7 @@ export const useGameStore = create<GameStore>()(
       bmpkLog: [],
       stressResult: null,
       achievements: [],
+      careerWins: 0,
       profitHistory: [{ day: 1, profit: 0 }],
       weeklyReports: [],
       quarterlyReports: [],
@@ -242,6 +252,7 @@ export const useGameStore = create<GameStore>()(
       setProfitHistory: (updater) => set((s) => ({ profitHistory: updater(s.profitHistory) })),
       setWeeklyReports: (updater) => set((s) => ({ weeklyReports: updater(s.weeklyReports) })),
       setQuarterlyReports: (updater) => set((s) => ({ quarterlyReports: updater(s.quarterlyReports) })),
+      setCareerWins: (updater) => set((s) => ({ careerWins: updater(s.careerWins) })),
       setEventLog: (updater) => set((s) => ({ eventLog: updater(s.eventLog) })),
       setAnalyticsData: (updater) => set((s) => ({ analyticsData: updater(s.analyticsData) })),
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -266,6 +277,7 @@ export const useGameStore = create<GameStore>()(
         acquired: gs.acquired ?? [],
         lpsEnabled: gs.lpsEnabled ?? false,
         achievements: gs.achievements ?? [],
+        careerWins: gs.careerWins ?? 0,
         profitHistory: gs.profitHistory ?? [],
         weeklyReports: gs.weeklyReports ?? [],
         quarterlyReports: gs.quarterlyReports ?? [],
@@ -291,8 +303,8 @@ export const useGameStore = create<GameStore>()(
         showTutorial: false,
         activeTab: "dashboard",
       }),
-      resetGame: (difficulty) => set({
-        game: makeInitGame(difficulty),
+      resetGame: (difficulty, scenarioId = "normal") => set({
+        game: makeInitGame(difficulty, scenarioId),
         staff: initialStaff(),
         notifs: [],
         negotiation: null,
@@ -351,6 +363,7 @@ export const useGameStore = create<GameStore>()(
         acquired: state.acquired,
         lpsEnabled: state.lpsEnabled,
         achievements: state.achievements,
+        careerWins: state.careerWins,
         profitHistory: state.profitHistory,
         weeklyReports: state.weeklyReports,
         quarterlyReports: state.quarterlyReports,

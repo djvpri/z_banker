@@ -9,7 +9,7 @@ import { useSound } from "@/hooks/useSound";
 import { useGameActions } from "@/hooks/useGameActions";
 import { useAdvanceDay } from "@/hooks/useAdvanceDay";
 import { Difficulty, DIFFICULTY_CONFIG } from "@/types/game";
-import { TABS } from "@/lib/gameConstants";
+import { TABS, SCENARIOS } from "@/lib/gameConstants";
 import { fmt } from "@/lib/gameFormat";
 import { TAB_COMPONENTS } from "./tabs";
 import { Notif as NotifComp } from "./ui/Shared";
@@ -39,6 +39,7 @@ export default function GameShell({ user }: Props) {
   const toggleDarkMode = useGameStore((s) => s.toggleDarkMode);
   const toggleMute = useGameStore((s) => s.toggleMute);
   const resetGame = useGameStore((s) => s.resetGame);
+  const careerWins = useGameStore((s) => s.careerWins);
   const setShowTutorial = useGameStore((s) => s.setShowTutorial);
 
   // Notifs & warnings
@@ -149,8 +150,8 @@ export default function GameShell({ user }: Props) {
     }
   }, [game.day]);
 
-  function handleStart(difficulty: Difficulty) {
-    resetGame(difficulty);
+  function handleStart(difficulty: Difficulty, scenarioId: string) {
+    resetGame(difficulty, scenarioId);
     setShowDifficulty(false);
     setShowTutorial(true);
     play("success");
@@ -256,6 +257,11 @@ export default function GameShell({ user }: Props) {
             {game.gameWon && (
               <div style={{ fontSize: 11, color: "#22c55e", marginBottom: 12, background: "#22c55e11", borderRadius: 8, padding: "8px 12px" }}>
                 🏆 Skor otomatis tersimpan ke Leaderboard Global!
+              </div>
+            )}
+            {game.gameWon && (
+              <div style={{ fontSize: 11, color: "#c8a96e", marginBottom: 12 }}>
+                🏅 Kemenangan karir ke-{careerWins}
               </div>
             )}
             <div style={{ display: "flex", gap: 8 }}>
@@ -373,6 +379,10 @@ export default function GameShell({ user }: Props) {
             <div style={{ fontSize: 9, color: "#555" }}>
               D{game.day} · Lv.{game.level}
               <span style={{ color: cfg.color, marginLeft: 6 }}>· {cfg.label}</span>
+              {game.scenarioId !== "normal" && (() => {
+                const sc = SCENARIOS.find((s) => s.id === game.scenarioId);
+                return sc ? <span style={{ color: "#c8a96e", marginLeft: 6 }}>· {sc.icon} {sc.name}</span> : null;
+              })()}
             </div>
           </div>
         </div>

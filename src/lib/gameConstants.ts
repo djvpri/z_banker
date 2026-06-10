@@ -1,7 +1,7 @@
 // src/lib/gameConstants.ts
 // Konstanta game — dipindahkan dari artifact bank-manager-simulator.jsx
 import { M, B, clamp } from "./gameFormat";
-import type { StaffRole, EconPhase } from "@/types/game";
+import type { StaffRole, EconPhase, ScenarioConfig } from "@/types/game";
 
 export const STAFF_ROLES: Record<StaffRole, { label: string; icon: string; color: string; salary: number; desc: string }> = {
   teller:  { label: "Teller",           icon: "🏧", color: "#60a5fa", salary: 45000,  desc: "Layani nasabah harian" },
@@ -82,6 +82,25 @@ export function getQuarterlyKpiTargets(quarter: number) {
     reputation: Math.min(70, 50 + (quarter - 1) * 1),
   };
 }
+
+// Mode skenario New Game+: kondisi awal alternatif, dibuka via kemenangan karir
+export const SCENARIOS: ScenarioConfig[] = [
+  { id: "normal", name: "Normal", icon: "🏦", desc: "Kondisi awal standar.",
+    unlockWins: 0, cashMult: 1, depositMult: 1, loanMult: 1, reputationDelta: 0,
+    npl: 0.5, car: 18.5, econPhase: "normal" },
+  { id: "krisis", name: "Krisis Moneter", icon: "🌪️",
+    desc: "Mulai di tengah resesi: kas, CAR, dan reputasi lebih rendah, NPL lebih tinggi.",
+    unlockWins: 1, cashMult: 0.6, depositMult: 1, loanMult: 1, reputationDelta: -10,
+    npl: 2.5, car: 14, econPhase: "resesi" },
+  { id: "boom", name: "Era Keemasan", icon: "🚀",
+    desc: "Mulai di puncak boom ekonomi dengan portofolio deposito & kredit lebih besar sejak awal.",
+    unlockWins: 1, cashMult: 1, depositMult: 1.5, loanMult: 1.5, reputationDelta: 5,
+    npl: 0.5, car: 18.5, econPhase: "boom" },
+  { id: "veteran", name: "Veteran", icon: "👑",
+    desc: "Untuk juara berkali-kali: rasio CAR, NPL, dan LDR sudah mepet target OJK sejak hari 1 — minim margin aman.",
+    unlockWins: 3, cashMult: 1, depositMult: 1, loanMult: 1.17, reputationDelta: -10,
+    npl: 3.5, car: 13, econPhase: "normal" },
+];
 
 export const LPS_PREMIUM_RATE = 0.002; // 0.2% per tahun dari simpanan dijamin
 export const LPS_MAX_COVERAGE = 2 * B; // Rp2 Miliar per nasabah

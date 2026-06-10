@@ -228,6 +228,21 @@ export interface Competitor {
 
 export type EconPhase = "normal" | "boom" | "resesi";
 
+export interface ScenarioConfig {
+  id: string;
+  name: string;
+  icon: string;
+  desc: string;
+  unlockWins: number;
+  cashMult: number;
+  depositMult: number;
+  loanMult: number;
+  reputationDelta: number;
+  npl: number;
+  car: number;
+  econPhase: EconPhase;
+}
+
 export interface GameState {
   day: number;
   cash: number;
@@ -250,6 +265,7 @@ export interface GameState {
   bankName: string;
   econPhase: EconPhase;
   econPhaseUntil: number;
+  scenarioId: string;
 }
 
 export interface DailyChallengeData {
