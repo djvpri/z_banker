@@ -35,11 +35,14 @@ export default function HireModal({ onHire, onClose, cash }: Props) {
   const [negMsg, setNegMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   const canAfford = cash >= 5 * M;
-  const staffCount = useGameStore((s) => s.staff.length);
+  const staff = useGameStore((s) => s.staff);
+  const staffCount = staff.length;
   const branch = useGameStore((s) => s.game.branch);
   const maxStaff = BRANCHES[branch]?.maxStaff ?? 5;
   const isFull = staffCount >= maxStaff;
-  const canHire = canAfford && !isFull;
+  const hasManager = staff.some((s) => s.role === "manajer");
+  const managerBlocked = role === "manajer" && hasManager;
+  const canHire = canAfford && !isFull && !managerBlocked;
 
   const selectCandidate = (c: Candidate) => {
     setSelected(c);
@@ -92,6 +95,11 @@ export default function HireModal({ onHire, onClose, cash }: Props) {
         {!canAfford && (
           <div style={{ background: "#ef444418", border: "1px solid #ef444433", borderRadius: 8, padding: "8px 12px", fontSize: 11, color: "#ef4444", marginBottom: 12 }}>
             ❌ Kas tidak cukup untuk biaya rekrutmen (Rp5jt).
+          </div>
+        )}
+        {managerBlocked && (
+          <div style={{ background: "#ef444418", border: "1px solid #ef444433", borderRadius: 8, padding: "8px 12px", fontSize: 11, color: "#ef4444", marginBottom: 12 }}>
+            ❌ Sudah ada Manajer aktif. Maksimal 1 Manajer per bank.
           </div>
         )}
 
