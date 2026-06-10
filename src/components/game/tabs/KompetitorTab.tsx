@@ -12,9 +12,13 @@ export default function KompetitorTab() {
   const branch = BRANCHES[game.branch];
 
   const totalDeposits = game.deposits + competitors.reduce((s, b) => s + b.deposits, 0);
+  const totalLoans = game.loans + competitors.reduce((s, b) => s + b.loans, 0);
   const myName = game.bankName || "Bank Nusantara";
   const shareRows = [{ label: myName, val: game.deposits, color: "#c8a96e" }].concat(
     competitors.map((b) => ({ label: b.name, val: b.deposits, color: "#ef4444" }))
+  );
+  const loanShareRows = [{ label: myName, val: game.loans, color: "#c8a96e" }].concat(
+    competitors.map((b) => ({ label: b.name, val: b.loans, color: "#ef4444" }))
   );
 
   return (
@@ -32,7 +36,7 @@ export default function KompetitorTab() {
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#22c55e", fontFamily: "monospace" }}>Rep {game.reputation}%</div>
-            <div style={{ fontSize: 11, color: "#aaa" }}>{fmt(game.deposits)}</div>
+            <div style={{ fontSize: 10, color: "#aaa" }}>💰 {fmt(game.deposits)} · 📋 {fmt(game.loans)}</div>
           </div>
         </div>
       </div>
@@ -64,7 +68,7 @@ export default function KompetitorTab() {
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: ahead ? "#ef4444" : "#22c55e", fontFamily: "monospace" }}>Rep {b.reputation.toFixed(0)}%</div>
-                <div style={{ fontSize: 11, color: "#777" }}>{fmt(b.deposits)}</div>
+                <div style={{ fontSize: 10, color: "#777" }}>💰 {fmt(b.deposits)} · 📋 {fmt(b.loans)}</div>
               </div>
             </div>
 
@@ -96,6 +100,22 @@ export default function KompetitorTab() {
         <div style={{ fontSize: 11, color: "#c8a96e", fontWeight: 700, marginBottom: 8 }}>📊 Pangsa Pasar Deposito</div>
         {shareRows.map((item, i) => {
           const pct = Math.round((item.val / totalDeposits) * 100);
+          return (
+            <div key={i} style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#aaa", marginBottom: 3 }}>
+                <span>{item.label}</span>
+                <span style={{ color: item.color, fontFamily: "monospace" }}>{pct}% · {fmt(item.val)}</span>
+              </div>
+              <Bar val={pct} max={100} color={item.color} />
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 12, padding: 14, marginTop: 8 }}>
+        <div style={{ fontSize: 11, color: "#c8a96e", fontWeight: 700, marginBottom: 8 }}>📋 Pangsa Pasar Kredit</div>
+        {loanShareRows.map((item, i) => {
+          const pct = Math.round((item.val / totalLoans) * 100);
           return (
             <div key={i} style={{ marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#aaa", marginBottom: 3 }}>

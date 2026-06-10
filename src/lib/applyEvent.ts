@@ -30,7 +30,7 @@ export function applyEvent(ev: GameEvent, prev: GameState, staffList: Staff[]): 
     case "gosip": return { reputation: clamp(prev.reputation - 15, 0, 100), deposits: prev.deposits * 0.96 };
     case "inflasi": return { deposits: prev.deposits * 0.88, npl: clamp(prev.npl + 0.5, 0.5, 15) };
     case "haji": return { deposits: prev.deposits * 0.92, cash: prev.cash * 0.9 };
-    case "lebaran": return { reputation: clamp(prev.reputation + 10, 0, 100), cash: prev.cash * 1.05 };
+    case "lebaran": return { reputation: clamp(prev.reputation + 10, 0, 100), cash: prev.cash * 0.95 };
     case "pemilu": return { deposits: prev.deposits * 0.93, reputation: clamp(prev.reputation - 5, 0, 100) };
     case "sistem_down": return { reputation: clamp(prev.reputation - 18, 0, 100), cash: prev.cash - 15 * M };
     case "banjir": return { cash: prev.cash - 30 * M, reputation: clamp(prev.reputation - 10, 0, 100) };

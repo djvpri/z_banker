@@ -566,7 +566,33 @@ export function useAdvanceDay() {
           setActiveEvent(ev);
         }
 
-      } else if (["resign", "fraud", "training_gov", "mogok", "rekrut_baru", "sakit_massal", "beasiswa"].indexOf(ev.id) < 0) {
+      } else if (ev.id === "gedung_baru") {
+        setGame((prevG) => ({ ...prevG, ...applyEvent(ev, prevG, localStaff) }));
+        setStaff((s) => s.map((x) => ({ ...x, morale: clamp(x.morale + 10, 0, 100) })));
+        addNotif("🏢 Gedung baru selesai! Reputasi naik, moral seluruh staf +10.", "success");
+        setActiveEvent(ev);
+
+      } else if (ev.id === "banjir") {
+        setGame((prevG) => ({ ...prevG, ...applyEvent(ev, prevG, localStaff) }));
+        setStaff((s) => s.map((x) => x.status === "aktif" ? { ...x, workload: clamp(x.workload + 15, 0, 100) } : x));
+        addNotif("🌊 Banjir melanda kantor! Biaya perbaikan besar, staf WFH dan beban kerja meningkat.", "danger");
+        setActiveEvent(ev);
+
+      } else if (ev.id === "viral") {
+        setGame((prevG) => ({ ...prevG, ...applyEvent(ev, prevG, localStaff) }));
+        {
+          const { branch: viralBranch, day: viralDay } = useGameStore.getState().game;
+          const max = BRANCHES[viralBranch].maxCustomers;
+          const extra = rnd(2, 4);
+          setCustomers((c) => {
+            const newCusts = Array(extra).fill(null).map(() => genLoanCustomer(viralDay, viralBranch));
+            return newCusts.concat(c).slice(0, max);
+          });
+        }
+        addNotif("🔥 Bank viral di medsos! Reputasi melonjak, antrian nasabah bertambah.", "success");
+        setActiveEvent(ev);
+
+      } else if (["resign", "fraud", "training_gov", "mogok", "rekrut_baru", "sakit_massal", "beasiswa", "gedung_baru", "banjir", "viral"].indexOf(ev.id) < 0) {
         setGame((prevG) => {
           const changes = applyEvent(ev, prevG, localStaff);
           return { ...prevG, ...changes };
