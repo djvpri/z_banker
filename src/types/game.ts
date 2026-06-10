@@ -89,6 +89,7 @@ export interface Prospect {
   contacted: boolean;
   approached: number;
   daysLeft: number;
+  lastApproachDay: number;
 }
 
 export interface Investment {

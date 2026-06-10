@@ -25,6 +25,7 @@ export function genProspect(): Prospect {
     contacted: false,
     approached: 0,
     daysLeft: rnd(3, 10),
+    lastApproachDay: -1,
   };
 }
 

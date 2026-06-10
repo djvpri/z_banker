@@ -9,6 +9,7 @@ import { Bar } from "../ui/Shared";
 export default function ProspekTab() {
   const prospects = useGameStore((s) => s.prospects);
   const staff = useGameStore((s) => s.staff);
+  const day = useGameStore((s) => s.game.day);
   const { handleApproach, handleConvert, handleDismissProspect } = useGameActions();
 
   const csPool = staff.filter((s) => s.role === "cs" || s.role === "teller");
@@ -69,7 +70,7 @@ export default function ProspekTab() {
       </div>
 
       <div style={{ fontSize: 10, color: "#555", marginBottom: 10, padding: "6px 10px", background: "#0d0d14", borderRadius: 6 }}>
-        💡 Approach pakai staf CS/Teller (workload +20). Konversi bisa dilakukan jika ketertarikan ≥ 50%.
+        💡 Approach pakai staf CS/Teller (workload +20), maks 1x per hari per prospek. Konversi bisa dilakukan jika ketertarikan ≥ 50%.
       </div>
 
       {prospects.length === 0 && (
@@ -83,7 +84,8 @@ export default function ProspekTab() {
         const noStaff = csActiveForP.length === 0;
         const assignedStaff = csActiveForP.length > 0 ? csActiveForP.reduce((best, s) => (s.workload < best.workload ? s : best), csActiveForP[0]) : null;
         const overloaded = !!assignedStaff && assignedStaff.workload >= 80;
-        const approachDisabled = noStaff;
+        const approachedToday = p.lastApproachDay === day;
+        const approachDisabled = noStaff || approachedToday;
 
         return (
           <div key={p.id} style={{ background: "#0e0e18", border: `1px solid ${urgency ? "#ef444433" : p.contacted ? "#60a5fa22" : "#1a1a2e"}`, borderRadius: 12, padding: 13, marginBottom: 8 }}>
@@ -139,7 +141,7 @@ export default function ProspekTab() {
                   color: approachDisabled ? "#333" : overloaded ? "#f59e0b" : "#60a5fa",
                   borderRadius: 6, padding: "6px 0", cursor: approachDisabled ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 700,
                 }}>
-                {approachDisabled ? "❌ No Staf" : overloaded ? "⚠️ Approach" : "📞 Approach"}
+                {noStaff ? "❌ No Staf" : approachedToday ? "✅ Sudah Hari Ini" : overloaded ? "⚠️ Approach" : "📞 Approach"}
               </button>
               <button
                 onClick={() => handleConvert(p.id)}

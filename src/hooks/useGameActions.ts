@@ -222,8 +222,13 @@ export function useGameActions() {
   }, [addNotif]);
 
   const handleApproach = useCallback((pid: number) => {
-    const { staff } = useGameStore.getState();
+    const { staff, game, prospects } = useGameStore.getState();
     const { setStaff, setProspects } = useGameStore.getState();
+    const target = prospects.find((p) => p.id === pid);
+    if (target && target.lastApproachDay === game.day) {
+      addNotif("⏳ " + target.name + " sudah di-approach hari ini. Coba lagi besok.", "warning");
+      return;
+    }
     const csActive = staff.filter((s) => (s.role === "cs" || s.role === "teller") && s.status === "aktif");
     if (csActive.length === 0) { addNotif("❌ Tidak ada staf CS/Teller aktif!", "danger"); return; }
     const csStaff = csActive.reduce((best, s) => (s.workload < best.workload ? s : best), csActive[0]);
@@ -233,7 +238,7 @@ export function useGameActions() {
       if (p.id !== pid) return p;
       const ni = clamp(p.interest + rnd(5, 20), 10, 99);
       addNotif((overloaded ? "⚠️ " : "📞 ") + csStaff.name + " (beban " + csStaff.workload + "%) menghubungi " + p.name + ". Ketertarikan: " + ni + "%", overloaded ? "warning" : "info");
-      return { ...p, contacted: true, approached: p.approached + 1, interest: ni };
+      return { ...p, contacted: true, approached: p.approached + 1, interest: ni, lastApproachDay: game.day };
     }));
   }, [addNotif]);
 
