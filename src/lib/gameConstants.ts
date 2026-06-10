@@ -1,6 +1,6 @@
 // src/lib/gameConstants.ts
 // Konstanta game — dipindahkan dari artifact bank-manager-simulator.jsx
-import { M, B } from "./gameFormat";
+import { M, B, clamp } from "./gameFormat";
 import type { StaffRole, EconPhase } from "@/types/game";
 
 export const STAFF_ROLES: Record<StaffRole, { label: string; icon: string; color: string; salary: number; desc: string }> = {
@@ -47,17 +47,17 @@ export const STRESS_SCENARIOS = [
 export const ECONOMIC_PHASES: Record<EconPhase, {
   label: string; icon: string; color: string; desc: string;
   demandMultiplier: number; nplDriftBias: number; depositGrowthBias: number;
-  minDuration: number; maxDuration: number;
+  aggressionBias: number; minDuration: number; maxDuration: number;
 }> = {
   normal: { label: "Normal", icon: "➖", color: "#60a5fa",
     desc: "Kondisi ekonomi stabil.",
-    demandMultiplier: 1, nplDriftBias: 0, depositGrowthBias: 0, minDuration: 20, maxDuration: 35 },
+    demandMultiplier: 1, nplDriftBias: 0, depositGrowthBias: 0, aggressionBias: 0, minDuration: 20, maxDuration: 35 },
   boom: { label: "Ekspansi", icon: "📈", color: "#22c55e",
     desc: "Ekonomi tumbuh pesat. Permintaan kredit & nasabah baru naik, NPL cenderung membaik.",
-    demandMultiplier: 1.5, nplDriftBias: -0.4, depositGrowthBias: 0.05, minDuration: 15, maxDuration: 30 },
+    demandMultiplier: 1.5, nplDriftBias: -0.4, depositGrowthBias: 0.05, aggressionBias: -0.2, minDuration: 15, maxDuration: 30 },
   resesi: { label: "Resesi", icon: "📉", color: "#ef4444",
     desc: "Ekonomi melambat. Permintaan kredit turun, NPL cenderung memburuk, deposito tertekan.",
-    demandMultiplier: 0.6, nplDriftBias: 0.5, depositGrowthBias: -0.08, minDuration: 15, maxDuration: 30 },
+    demandMultiplier: 0.6, nplDriftBias: 0.5, depositGrowthBias: -0.08, aggressionBias: 0.5, minDuration: 15, maxDuration: 30 },
 };
 
 // Transisi tertimbang: boom/resesi cenderung kembali ke normal dulu sebelum berganti arah
@@ -66,6 +66,11 @@ export const ECON_NEXT_PHASE: Record<EconPhase, EconPhase[]> = {
   boom: ["normal", "normal", "resesi"],
   resesi: ["normal", "normal", "boom"],
 };
+
+// Tingkat agresivitas kompetitor: naik perlahan seiring hari, dipengaruhi fase ekonomi
+export function getCompetitionAggression(day: number, econPhase: EconPhase): number {
+  return clamp(1 + day / 150 + ECONOMIC_PHASES[econPhase].aggressionBias, 0.6, 2.5);
+}
 
 export const LPS_PREMIUM_RATE = 0.002; // 0.2% per tahun dari simpanan dijamin
 export const LPS_MAX_COVERAGE = 2 * B; // Rp2 Miliar per nasabah

@@ -10,7 +10,7 @@ import { clamp, rnd, pick, fmt, M, B } from "@/lib/gameFormat";
 import {
   STAFF_ROLES, BRANCHES, ALL_PRODUCTS, EVENTS, ACHIEVEMENTS,
   INVESTMENT_OPTIONS, LPS_PREMIUM_RATE, LPS_MAX_COVERAGE, CITIES,
-  ECONOMIC_PHASES, ECON_NEXT_PHASE,
+  ECONOMIC_PHASES, ECON_NEXT_PHASE, getCompetitionAggression,
 } from "@/lib/gameConstants";
 import { genProspect, genLoanCustomer, genCompetitor } from "@/lib/gameGenerators";
 import { applyEvent } from "@/lib/applyEvent";
@@ -453,6 +453,8 @@ export function useAdvanceDay() {
     // ── Dynamic competitor simulation ───────────────────────────────────────
     setCompetitors((prev) => {
       const playerRep = useGameStore.getState().game.reputation;
+      const econPhaseNow = useGameStore.getState().game.econPhase;
+      const aggression = getCompetitionAggression(currentDay + 1, econPhaseNow);
 
       const survived = prev.map((b) => {
         const age = b.age + 1;
@@ -460,7 +462,7 @@ export function useAdvanceDay() {
         let depGrowth: number;
         let repDelta: number;
         if (b.strategy === "agresif") {
-          depGrowth = (Math.random() * 0.04 - 0.01) * b.deposits;
+          depGrowth = (Math.random() * 0.04 - 0.01) * b.deposits * aggression;
           repDelta = (Math.random() - 0.5) * 4;
         } else if (b.strategy === "ekspansif") {
           depGrowth = (Math.random() * 0.03) * b.deposits;
@@ -473,14 +475,30 @@ export function useAdvanceDay() {
           repDelta = Math.random() * 1 - 0.5;
         }
 
-        const stealFactor = b.reputation > playerRep ? 0.008 : 0;
+        const stealFactor = b.reputation > playerRep ? 0.008 * aggression : 0;
         const stolen = stealFactor > 0 ? b.deposits * stealFactor : 0;
 
         const newDep = Math.max(30 * M, b.deposits + depGrowth + stolen);
+
+        // Loan dynamics — mirror deposit growth per strategi
+        let loanGrowth: number;
+        if (b.strategy === "agresif") {
+          loanGrowth = (Math.random() * 0.04 - 0.01) * b.loans * aggression;
+        } else if (b.strategy === "ekspansif") {
+          loanGrowth = (Math.random() * 0.03) * b.loans;
+        } else if (b.strategy === "konservatif") {
+          loanGrowth = (Math.random() * 0.015 - 0.005) * b.loans;
+        } else {
+          loanGrowth = (Math.random() - 0.55) * 0.02 * b.loans;
+        }
+        const loanStealFactor = b.reputation > playerRep ? 0.006 * aggression : 0;
+        const loanStolen = loanStealFactor > 0 ? b.loans * loanStealFactor : 0;
+        const newLoans = Math.max(20 * M, b.loans + loanGrowth + loanStolen);
+
         const newRep = clamp(b.reputation + repDelta, 15, 95);
         const exitWarning = age >= b.lifespan - 5;
 
-        return { ...b, age, deposits: newDep, reputation: parseFloat(newRep.toFixed(1)), exitWarning };
+        return { ...b, age, deposits: newDep, loans: newLoans, reputation: parseFloat(newRep.toFixed(1)), exitWarning };
       });
 
       const exited: typeof survived = [];
@@ -496,12 +514,24 @@ export function useAdvanceDay() {
         addNotif("🚪 " + b.name + " keluar dari pasar! Nasabah mereka tersebar.", "warning");
       });
 
+      // Kompetitor agresif/ekspansif yang unggul reputasi sesekali merebut nasabah pemain langsung
+      const aheadAggressive = remaining.filter((b) => b.reputation > playerRep && (b.strategy === "agresif" || b.strategy === "ekspansif"));
+      if (aheadAggressive.length > 0 && Math.random() < clamp((aggression - 1) * 0.15, 0, 0.35)) {
+        const culprit = pick(aheadAggressive);
+        const stealPct = 0.003 * aggression;
+        const targetLoans = culprit.speciality === "loan" || (culprit.speciality === "korporat" && Math.random() < 0.5);
+        setGame((g) => targetLoans
+          ? { ...g, loans: Math.max(0, g.loans - Math.floor(g.loans * stealPct)) }
+          : { ...g, deposits: Math.max(0, g.deposits - Math.floor(g.deposits * stealPct)) });
+        addNotif("📉 " + culprit.name + " merebut sebagian nasabah " + (targetLoans ? "kredit" : "deposito") + " Anda!", "warning");
+      }
+
       const newEntrants: typeof survived = [];
       // Use currentDay+1 (deterministic) instead of getState() which can see stale state inside updater
       const advancedDay = currentDay + 1;
       const difficulty = game.difficulty;
       const spawnRate = difficulty === "hard" ? 0.35 : difficulty === "normal" ? 0.22 : 0.15;
-      const maxCompetitors = difficulty === "hard" ? 6 : 5;
+      const maxCompetitors = (difficulty === "hard" ? 6 : 5) + (advancedDay >= 90 ? 1 : 0);
       const guaranteedDay = difficulty === "hard" ? 5 : 7;
       const guaranteedFirst = remaining.length === 0 && advancedDay >= guaranteedDay;
       const shouldEnter = exited.length > 0 || guaranteedFirst || (Math.random() < spawnRate && remaining.length < maxCompetitors);
@@ -511,7 +541,7 @@ export function useAdvanceDay() {
         addNotif("🏦 " + nb.name + " baru masuk pasar! Strategi: " + nb.strategy + ".", "info");
       }
 
-      return remaining.concat(newEntrants).slice(0, 5);
+      return remaining.concat(newEntrants).slice(0, maxCompetitors);
     });
 
     // ── Pengaruh siklus ekonomi terhadap permintaan kredit & nasabah baru ──────

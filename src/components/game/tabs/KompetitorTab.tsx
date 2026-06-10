@@ -1,7 +1,7 @@
 // src/components/game/tabs/KompetitorTab.tsx
 "use client";
 import { useGameStore } from "@/store/gameStore";
-import { BRANCHES } from "@/lib/gameConstants";
+import { BRANCHES, getCompetitionAggression } from "@/lib/gameConstants";
 import { fmt, clamp } from "@/lib/gameFormat";
 import { Bar } from "../ui/Shared";
 
@@ -10,6 +10,10 @@ export default function KompetitorTab() {
   const staff = useGameStore((s) => s.staff);
   const competitors = useGameStore((s) => s.competitors);
   const branch = BRANCHES[game.branch];
+
+  const aggression = getCompetitionAggression(game.day, game.econPhase);
+  const aggLevel = aggression < 0.9 ? "Rendah" : aggression < 1.3 ? "Sedang" : aggression < 1.8 ? "Tinggi" : "Ekstrem";
+  const aggColor = aggression < 0.9 ? "#22c55e" : aggression < 1.3 ? "#60a5fa" : aggression < 1.8 ? "#f59e0b" : "#ef4444";
 
   const totalDeposits = game.deposits + competitors.reduce((s, b) => s + b.deposits, 0);
   const totalLoans = game.loans + competitors.reduce((s, b) => s + b.loans, 0);
@@ -23,7 +27,12 @@ export default function KompetitorTab() {
 
   return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: "#c8a96e", marginBottom: 12 }}>⚔️ Persaingan Pasar ({competitors.length} bank aktif)</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#c8a96e" }}>⚔️ Persaingan Pasar ({competitors.length} bank aktif)</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: aggColor, background: aggColor + "22", padding: "2px 8px", borderRadius: 6 }}>
+          🔥 Persaingan: {aggLevel}
+        </div>
+      </div>
 
       <div style={{ background: "#0e0e18", border: "1px solid #c8a96e44", borderRadius: 12, padding: 12, marginBottom: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
