@@ -59,6 +59,7 @@ function makeInitGame(difficulty: Difficulty): GameState {
     branch: 0, level: 1, difficulty,
     tutorialStep: 0, tutorialDone: false,
     bankName: "Bank Nusantara",
+    econPhase: "normal", econPhaseUntil: rnd(20, 35),
   };
 }
 
@@ -241,7 +242,11 @@ export const useGameStore = create<GameStore>()(
       setTutorialStep: (step) => set({ tutorialStep: step }),
       toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
       loadGame: (gs) => set({
-        game: gs.game ?? undefined,
+        game: gs.game ? {
+          ...gs.game,
+          econPhase: gs.game.econPhase ?? "normal",
+          econPhaseUntil: gs.game.econPhaseUntil ?? (gs.game.day + 25),
+        } : undefined,
         staff: gs.staff ?? undefined,
         rates: gs.rates ?? undefined,
         loanPortfolio: gs.loanPortfolio ?? [],

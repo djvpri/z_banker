@@ -2,6 +2,7 @@
 "use client";
 import { useGameStore } from "@/store/gameStore";
 import { fmt } from "@/lib/gameFormat";
+import { ECONOMIC_PHASES } from "@/lib/gameConstants";
 
 const SLIDERS = [
   { key: "savings" as const, label: "🏦 Bunga Tabungan", min: 1, max: 12, step: 0.5, color: "#60a5fa" },
@@ -13,9 +14,17 @@ export default function BungaTab() {
   const rates = useGameStore((s) => s.rates);
   const setRates = useGameStore((s) => s.setRates);
 
+  const econCfg = ECONOMIC_PHASES[game.econPhase];
+
   return (
     <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 12, padding: 14 }}>
       <div style={{ fontSize: 13, fontWeight: 700, color: "#c8a96e", marginBottom: 14 }}>💹 Atur Suku Bunga</div>
+      <div style={{
+        background: "#0d0d14", border: `1px solid ${econCfg.color}44`, borderRadius: 8,
+        padding: "8px 10px", marginBottom: 14, fontSize: 11, color: "#aaa",
+      }}>
+        <span style={{ color: econCfg.color, fontWeight: 700 }}>{econCfg.icon} {econCfg.label}:</span> {econCfg.desc}
+      </div>
       {SLIDERS.map((r) => (
         <div key={r.key} style={{ marginBottom: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>

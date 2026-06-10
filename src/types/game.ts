@@ -210,6 +210,8 @@ export interface Competitor {
   exitWarning: boolean;
 }
 
+export type EconPhase = "normal" | "boom" | "resesi";
+
 export interface GameState {
   day: number;
   cash: number;
@@ -230,6 +232,8 @@ export interface GameState {
   tutorialStep: number;
   tutorialDone: boolean;
   bankName: string;
+  econPhase: EconPhase;
+  econPhaseUntil: number;
 }
 
 export interface DailyChallengeData {

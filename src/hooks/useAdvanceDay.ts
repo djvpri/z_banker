@@ -10,6 +10,7 @@ import { clamp, rnd, pick, fmt, M, B } from "@/lib/gameFormat";
 import {
   STAFF_ROLES, BRANCHES, ALL_PRODUCTS, EVENTS, ACHIEVEMENTS,
   INVESTMENT_OPTIONS, LPS_PREMIUM_RATE, LPS_MAX_COVERAGE, CITIES,
+  ECONOMIC_PHASES, ECON_NEXT_PHASE,
 } from "@/lib/gameConstants";
 import { genProspect, genLoanCustomer, genCompetitor } from "@/lib/gameGenerators";
 import { applyEvent } from "@/lib/applyEvent";
@@ -317,9 +318,20 @@ export function useAdvanceDay() {
       // Branch passive income (only branches that have finished construction generate income)
       const branchIncome = branches.filter((b) => b.status === "aktif").reduce((s, b) => s + Math.floor(b.deposits * (rates.loan / 100) / 365 * 0.3), 0);
 
+      // ── Macro economic cycle ────────────────────────────────────────────────
+      let econPhase = prev.econPhase;
+      let econPhaseUntil = prev.econPhaseUntil;
+      let phaseChanged = false;
+      if (prev.day >= econPhaseUntil) {
+        econPhase = pick(ECON_NEXT_PHASE[econPhase]);
+        econPhaseUntil = prev.day + rnd(ECONOMIC_PHASES[econPhase].minDuration, ECONOMIC_PHASES[econPhase].maxDuration);
+        phaseChanged = true;
+      }
+      const phaseCfg = ECONOMIC_PHASES[econPhase];
+
       const dailyProfit = Math.floor((inc * (1 + perfBonus)) - exp - totalSalary + investIncome + serviceIncome + branchIncome - lpsPremium);
       const newCash = prev.cash + dailyProfit;
-      const newDeposits = prev.deposits + payrollDeposit;
+      const newDeposits = prev.deposits + payrollDeposit + Math.floor(prev.deposits * phaseCfg.depositGrowthBias / 100);
 
       // NPL derived from actual portfolio: macet 100% + perhatian 50%
       const currentLP = useGameStore.getState().loanPortfolio;
@@ -330,7 +342,7 @@ export function useAdvanceDay() {
         ? (macetAmt + perhatianAmt * 0.5) / totalLoanAmt * 100
         : 0;
       // Trend toward portfolio NPL ±small noise, team modifier helps reduce it
-      const target = Math.max(0.5, portfolioNpl);
+      const target = Math.max(0.5, portfolioNpl + phaseCfg.nplDriftBias);
       // Recovery (turun) lebih cepat dari kenaikan supaya semua-lancar terasa responsif
       const driftRate = target < prev.npl ? 0.65 : 0.35;
       const rawDrift = (target - prev.npl) * driftRate;
@@ -348,6 +360,10 @@ export function useAdvanceDay() {
       const gameWon = newTP >= 10 * B;
       setProfitHistory((h) => h.concat([{ day: prev.day, profit: Math.floor(dailyProfit / M) }]).slice(-30));
       addNotif("📅 Hari " + prev.day + " selesai · Profit " + fmt(dailyProfit), "info");
+      if (phaseChanged) {
+        addNotif(phaseCfg.icon + " Kondisi ekonomi berubah: " + phaseCfg.label + "! " + phaseCfg.desc,
+          econPhase === "resesi" ? "warning" : "success");
+      }
 
       const nextState: GameState = {
         ...prev,
@@ -355,6 +371,7 @@ export function useAdvanceDay() {
         totalProfit: newTP, npl: parseFloat(newNpl.toFixed(1)), reputation: newRep, ldr: newLdr,
         nim: parseFloat(newNim.toFixed(1)), car: parseFloat(newCar.toFixed(1)), gameOver, gameWon,
         level: Math.floor(Math.max(0, newTP) / B) + 1,
+        econPhase, econPhaseUntil,
       };
 
       // ── Weekly report every 7 days ─────────────────────────────────────────
@@ -497,11 +514,14 @@ export function useAdvanceDay() {
       return remaining.concat(newEntrants).slice(0, 5);
     });
 
+    // ── Pengaruh siklus ekonomi terhadap permintaan kredit & nasabah baru ──────
+    const econCfg = ECONOMIC_PHASES[useGameStore.getState().game.econPhase];
+
     // ── New customers arrive ─────────────────────────────────────────────────
     {
       const { day: newDay, branch } = useGameStore.getState().game;
       const max = BRANCHES[branch].maxCustomers;
-      const count = rnd(1, 3);
+      const count = Math.max(0, Math.round(rnd(1, 3) * econCfg.demandMultiplier));
       const atmBonus = activeProducts.reduce((s, pid) => {
         const prod = ALL_PRODUCTS.find((p) => p.id === pid);
         return s + (prod && prod.custPerDay ? prod.custPerDay : 0);
@@ -606,7 +626,7 @@ export function useAdvanceDay() {
       const aged = prev
         .map((p) => ({ ...p, daysLeft: p.daysLeft - 1, interest: clamp(p.interest + (Math.random() > 0.6 ? -3 : 1), 10, 99) }))
         .filter((p) => p.daysLeft > 0);
-      const newOnes = Math.random() < 0.4 ? [genProspect()] : [];
+      const newOnes = Math.random() < clamp(0.4 * econCfg.demandMultiplier, 0, 0.9) ? [genProspect()] : [];
       return newOnes.concat(aged).slice(0, 12);
     });
 

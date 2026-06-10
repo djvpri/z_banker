@@ -2,7 +2,7 @@
 "use client";
 import { useGameStore } from "@/store/gameStore";
 import { fmt } from "@/lib/gameFormat";
-import { STAFF_ROLES } from "@/lib/gameConstants";
+import { STAFF_ROLES, ECONOMIC_PHASES } from "@/lib/gameConstants";
 import { DIFFICULTY_CONFIG } from "@/types/game";
 import { Bar } from "../ui/Shared";
 
@@ -56,8 +56,20 @@ export default function DashboardTab() {
     <div style={{ fontSize: 10, color: "#555", marginBottom: 5 }}>{text}</div>
   );
 
+  const econCfg = ECONOMIC_PHASES[game.econPhase];
+  const econDaysLeft = Math.max(0, game.econPhaseUntil - game.day);
+
   return (
     <div className="grid-2">
+
+      {/* ── Kondisi ekonomi ── */}
+      {card(<>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: econCfg.color }}>{econCfg.icon} Ekonomi: {econCfg.label}</div>
+          <div style={{ fontSize: 9, color: "#555" }}>{econDaysLeft} hari lagi</div>
+        </div>
+        <div style={{ fontSize: 10, color: "#888" }}>{econCfg.desc}</div>
+      </>, true, econCfg.color + "44")}
 
       {/* ── Profit hari ini ── */}
       {card(<>
