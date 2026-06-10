@@ -2,12 +2,13 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import {
-  GameState, Staff, Customer, LoanPortfolioItem, SavingsPortfolioItem,
+  GameState, Staff, Candidate, Customer, LoanPortfolioItem, SavingsPortfolioItem,
   Prospect, Investment, CityBranch, CreditPipelineItem, WeeklyReport,
   EventLogEntry, Competitor, AnalyticsData, Difficulty, DIFFICULTY_CONFIG,
   Notif, Negotiation, FraudEvent, GameEvent, ReviewModalData, PredictiveWarning,
   EarlyRepayRequest, EarlyRepayOffer,
 } from "@/types/game";
+import { STAFF_ROLES } from "@/lib/gameConstants";
 
 const M = 1_000_000;
 const B = 1_000_000_000;
@@ -33,6 +34,20 @@ export function genStaff(role: Staff["role"]): Staff {
 
 export function initialStaff(): Staff[] {
   return [genStaff("teller"), genStaff("cs"), genStaff("analis")];
+}
+
+// Kandidat dengan atribut lebih bagus minta gaji lebih tinggi (0.7x - 1.4x gaji dasar role)
+export function genCandidate(role: Staff["role"]): Candidate {
+  const staff = genStaff(role);
+  const base = STAFF_ROLES[role].salary;
+  const avgAttr = (staff.skill + staff.speed + staff.loyalty) / 3;
+  const qualityFactor = 0.65 + clamp((avgAttr - 3) / 7, 0, 1) * 0.75;
+  const expectedSalary = Math.round((base * qualityFactor) / 1000) * 1000;
+  return { ...staff, salary: expectedSalary, expectedSalary };
+}
+
+export function genCandidatePool(role: Staff["role"], count = 3): Candidate[] {
+  return Array.from({ length: count }, () => genCandidate(role));
 }
 
 function makeInitGame(difficulty: Difficulty): GameState {

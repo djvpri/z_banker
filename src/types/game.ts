@@ -21,6 +21,11 @@ export interface Staff {
   restDay: number;
   warningCount: number;
   lastReviewDay: number;
+  salary?: number;
+}
+
+export interface Candidate extends Staff {
+  expectedSalary: number;
 }
 
 export interface FraudEvent {

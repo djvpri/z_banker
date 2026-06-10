@@ -4,7 +4,7 @@
 "use client";
 import { useCallback } from "react";
 import { useGameStore, genStaff } from "@/store/gameStore";
-import { Customer, StaffRole } from "@/types/game";
+import { Customer, StaffRole, Staff } from "@/types/game";
 import { clamp, fmt, rnd, pick, M } from "@/lib/gameFormat";
 import {
   STAFF_ROLES, PROMO_PATHS, INVESTMENT_OPTIONS, BRANCHES,
@@ -325,8 +325,10 @@ export function useGameActions() {
     setStaff((prev) => prev.map((x) => {
       if (x.id !== id) return x;
       const newRole = path.to;
+      const oldSalary = x.salary ?? STAFF_ROLES[x.role].salary;
+      const newSalary = Math.round(oldSalary * (STAFF_ROLES[newRole].salary / STAFF_ROLES[x.role].salary));
       addNotif("🎉 " + x.name + " dipromosikan menjadi " + STAFF_ROLES[newRole].label + "!", "success");
-      return { ...x, role: newRole, skill: clamp(x.skill + 1, 1, 10), morale: clamp(x.morale + 15, 0, 100), warningCount: 0 };
+      return { ...x, role: newRole, salary: newSalary, skill: clamp(x.skill + 1, 1, 10), morale: clamp(x.morale + 15, 0, 100), warningCount: 0 };
     }));
   }, [addNotif]);
 
@@ -386,7 +388,7 @@ export function useGameActions() {
     }
   }, [addNotif]);
 
-  const handleHire = useCallback((role: StaffRole) => {
+  const handleHire = useCallback((candidate: Staff, salary: number) => {
     const { game, staff } = useGameStore.getState();
     const { setGame, setStaff, setShowHire } = useGameStore.getState();
     const maxStaff = BRANCHES[game.branch]?.maxStaff ?? 5;
@@ -395,10 +397,11 @@ export function useGameActions() {
       return;
     }
     if (game.cash < 5 * M) { addNotif("❌ Kas tidak cukup!", "danger"); return; }
-    const ns = genStaff(role);
+    const { expectedSalary, ...staffFields } = candidate as any;
+    const ns: Staff = { ...staffFields, salary };
     setStaff((s) => s.concat([ns]));
     setGame((g) => ({ ...g, cash: g.cash - 5 * M }));
-    addNotif("✅ " + ns.name + " bergabung sebagai " + STAFF_ROLES[role].label + "! (" + (staff.length + 1) + "/" + maxStaff + ")", "success");
+    addNotif("✅ " + ns.name + " bergabung sebagai " + STAFF_ROLES[ns.role].label + " dengan gaji " + fmt(salary) + "/hari! (" + (staff.length + 1) + "/" + maxStaff + ")", "success");
     setShowHire(false);
   }, [addNotif]);
 

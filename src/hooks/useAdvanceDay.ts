@@ -273,7 +273,7 @@ export function useAdvanceDay() {
     // ── Main daily financial tick ────────────────────────────────────────────
     setGame((prev) => {
       if (prev.gameOver || prev.gameWon) return prev;
-      const totalSalary = localStaff.reduce((a, s) => a + STAFF_ROLES[s.role].salary, 0);
+      const totalSalary = localStaff.reduce((a, s) => a + (s.salary ?? STAFF_ROLES[s.role].salary), 0);
 
       // Service passive income (ATM, Mobile Banking, Safe Deposit Box, dst)
       const serviceIncome = activeProducts.reduce((sum, pid) => {

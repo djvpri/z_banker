@@ -19,7 +19,7 @@ export default function DashboardTab() {
   const burnout = staff.filter((s) => s.status === "burnout").length;
   const istirahat = staff.filter((s) => s.status === "istirahat").length;
   const avgSkill = aktif ? staff.filter((s) => s.status === "aktif").reduce((a, s) => a + s.skill, 0) / aktif : 5;
-  const totalSalary = staff.reduce((a, s) => a + STAFF_ROLES[s.role].salary, 0);
+  const totalSalary = staff.reduce((a, s) => a + (s.salary ?? STAFF_ROLES[s.role].salary), 0);
 
   // Health colors
   const carColor = game.car >= 14 ? "#22c55e" : game.car >= 12 ? "#f59e0b" : "#ef4444";

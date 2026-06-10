@@ -71,7 +71,7 @@ export default function StaffCard({ s, onTrain, onRest, onFire, onPromote, curre
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: 10, color: "#444" }}>-{fmt(role.salary)}/hari</div>
+        <div style={{ fontSize: 10, color: "#444" }}>-{fmt(s.salary ?? role.salary)}/hari</div>
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {!isRest && !isBurnout && (
             <button onClick={() => onRest(s.id)} style={{ background: "#22c55e18", border: "1px solid #22c55e33", color: "#22c55e", borderRadius: 5, padding: "4px 7px", cursor: "pointer", fontSize: 9 }}>💤</button>
