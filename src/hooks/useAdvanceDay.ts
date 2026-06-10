@@ -9,7 +9,7 @@ import { teamStats } from "@/lib/teamStats";
 import { clamp, rnd, pick, fmt, M, B } from "@/lib/gameFormat";
 import {
   STAFF_ROLES, BRANCHES, ALL_PRODUCTS, EVENTS, ACHIEVEMENTS,
-  INVESTMENT_OPTIONS, LPS_PREMIUM_RATE, LPS_MAX_COVERAGE,
+  INVESTMENT_OPTIONS, LPS_PREMIUM_RATE, LPS_MAX_COVERAGE, CITIES,
 } from "@/lib/gameConstants";
 import { genProspect, genLoanCustomer, genCompetitor } from "@/lib/gameGenerators";
 import { applyEvent } from "@/lib/applyEvent";
@@ -30,7 +30,7 @@ export function useAdvanceDay() {
       setProfitHistory, setWeeklyReports, setShowWeeklyReport, setAchievements,
       setPredictiveWarnings, setReviewModal, setCompetitors, setCustomers,
       setEventLog, setActiveEvent, setFraudEvent, setProspects, setAnalyticsData,
-      setEarlyRepayRequests, setEarlyRepayOffers,
+      setEarlyRepayRequests, setEarlyRepayOffers, setBranches, setActiveProducts, setPendingProducts,
     } = useGameStore.getState();
 
     const currentDay = game.day;
@@ -314,8 +314,8 @@ export function useAdvanceDay() {
       // LPS premium (0.2%/year of insured deposits)
       const lpsPremium = lpsEnabled ? Math.floor(Math.min(prev.deposits, LPS_MAX_COVERAGE * 100) * LPS_PREMIUM_RATE / 365) : 0;
 
-      // Branch passive income (each city branch generates income from its own deposits)
-      const branchIncome = branches.reduce((s, b) => s + Math.floor(b.deposits * (rates.loan / 100) / 365 * 0.3), 0);
+      // Branch passive income (only branches that have finished construction generate income)
+      const branchIncome = branches.filter((b) => b.status === "aktif").reduce((s, b) => s + Math.floor(b.deposits * (rates.loan / 100) / 365 * 0.3), 0);
 
       const dailyProfit = Math.floor((inc * (1 + perfBonus)) - exp - totalSalary + investIncome + serviceIncome + branchIncome - lpsPremium);
       const newCash = prev.cash + dailyProfit;
@@ -411,6 +411,27 @@ export function useAdvanceDay() {
 
       return nextState;
     });
+
+    // ── Branch construction completion ──────────────────────────────────────
+    const advancingDay = currentDay + 1;
+    setBranches((bs) => bs.map((b) => {
+      if (b.status !== "building" || b.activeDay > advancingDay) return b;
+      const city = CITIES.find((c) => c.id === b.cityId);
+      const curDeposits = useGameStore.getState().game.deposits;
+      const initDeposit = city ? Math.floor(curDeposits * city.depBonus * 0.1) : 0;
+      setGame((g) => ({ ...g, deposits: g.deposits + initDeposit, reputation: clamp(g.reputation + 8, 0, 100) }));
+      addNotif("🎉 Cabang " + (city ? city.name : b.cityId) + " resmi beroperasi! Ekspansi nasional berlanjut.", "success");
+      return { ...b, status: "aktif", deposits: initDeposit };
+    }));
+
+    // ── Pending product activation ────────────────────────────────────────────
+    setPendingProducts((pending) => pending.filter((pp) => {
+      if (pp.readyDay > advancingDay) return true;
+      const prod = ALL_PRODUCTS.find((p) => p.id === pp.id);
+      setActiveProducts((ap) => ap.concat([pp.id]));
+      addNotif("🎉 Produk " + (prod ? prod.name : pp.id) + " resmi aktif!", "success");
+      return false;
+    }));
 
     // ── Dynamic competitor simulation ───────────────────────────────────────
     setCompetitors((prev) => {

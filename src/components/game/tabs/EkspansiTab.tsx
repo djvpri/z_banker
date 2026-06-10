@@ -22,19 +22,29 @@ export default function EkspansiTab() {
 
       {branches.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", marginBottom: 7 }}>✅ Cabang Aktif ({branches.length})</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", marginBottom: 7 }}>✅ Cabang ({branches.length})</div>
           {branches.map((b) => {
             const city = CITIES.find((c) => c.id === b.cityId);
             if (!city) return null;
+            const isBuilding = b.status === "building";
+            const daysLeft = Math.max(0, b.activeDay - game.day);
             return (
-              <div key={b.cityId} style={{ background: "#0d1a0d", border: "1px solid #22c55e33", borderRadius: 10, padding: 11, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div key={b.cityId} style={{ background: isBuilding ? "#1a1208" : "#0d1a0d", border: `1px solid ${isBuilding ? "#f59e0b33" : "#22c55e33"}`, borderRadius: 10, padding: 11, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <span style={{ fontSize: 18 }}>{city.icon}</span>
                   <span style={{ fontWeight: 700, color: "#ddd", marginLeft: 8, fontSize: 13 }}>{city.name}</span>
-                  <span style={{ fontSize: 9, background: "#22c55e22", color: "#22c55e", padding: "1px 5px", borderRadius: 3, marginLeft: 6 }}>Aktif</span>
+                  {isBuilding ? (
+                    <span style={{ fontSize: 9, background: "#f59e0b22", color: "#f59e0b", padding: "1px 5px", borderRadius: 3, marginLeft: 6 }}>🏗️ Sedang Dibangun</span>
+                  ) : (
+                    <span style={{ fontSize: 9, background: "#22c55e22", color: "#22c55e", padding: "1px 5px", borderRadius: 3, marginLeft: 6 }}>✓ Aktif</span>
+                  )}
                 </div>
                 <div style={{ textAlign: "right", fontSize: 10, color: "#555" }}>
-                  <div>Dep: {fmt(b.deposits)}</div>
+                  {isBuilding ? (
+                    <div style={{ color: "#f59e0b" }}>Aktif {daysLeft > 0 ? "dalam " + daysLeft + " hari" : "besok"}</div>
+                  ) : (
+                    <div>Dep: {fmt(b.deposits)}</div>
+                  )}
                   <div>Buka hari {b.openDay}</div>
                 </div>
               </div>

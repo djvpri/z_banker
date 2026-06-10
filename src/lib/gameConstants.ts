@@ -22,6 +22,10 @@ export const BRANCHES = [
   { name: "Kantor Pusat", icon: "🏙️", maxCustomers: 20, repBonus: 25, cost: 2 * B,    workloadCap: 90, maxStaff: 20 },
 ];
 
+// Waktu (dalam hari) sebelum cabang baru / produk baru aktif sepenuhnya
+export const BRANCH_CONSTRUCTION_DAYS = 3;
+export const PRODUCT_INSTALL_DAYS = 2;
+
 export const CITIES = [
   { id: "jakarta",  name: "Jakarta",  icon: "🏙️", marketSize: "besar",  cost: 500 * M, maxCusts: 25, compCount: 5, depBonus: 0.3,  desc: "Pusat bisnis — pasar besar tapi kompetisi ketat" },
   { id: "surabaya", name: "Surabaya", icon: "🌊", marketSize: "besar",  cost: 400 * M, maxCusts: 20, compCount: 4, depBonus: 0.25, desc: "Kota industri terbesar kedua, UMKM aktif" },
@@ -161,4 +165,5 @@ export const TABS = [
   { id: "cabang",      label: "🏢 Cabang" },
   { id: "kompetitor",  label: "⚔️ Rival" },
   { id: "bunga",       label: "💰 Bunga" },
+  { id: "sosial",      label: "🤝 Sosial" },
 ];

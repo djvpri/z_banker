@@ -19,7 +19,7 @@ export function useAutoSave(slot = 1) {
       const gameState = {
         game: s.game, staff: s.staff, rates: s.rates, loanPortfolio: s.loanPortfolio,
         savingsPortfolio: s.savingsPortfolio, investments: s.investments,
-        activeProducts: s.activeProducts, branches: s.branches, acquired: s.acquired,
+        activeProducts: s.activeProducts, pendingProducts: s.pendingProducts, branches: s.branches, acquired: s.acquired,
         lpsEnabled: s.lpsEnabled, achievements: s.achievements, competitors: s.competitors,
         profitHistory: s.profitHistory, weeklyReports: s.weeklyReports, eventLog: s.eventLog,
       };

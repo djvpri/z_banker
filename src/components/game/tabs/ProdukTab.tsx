@@ -8,6 +8,7 @@ import { fmt } from "@/lib/gameFormat";
 export default function ProdukTab() {
   const game = useGameStore((s) => s.game);
   const activeProducts = useGameStore((s) => s.activeProducts);
+  const pendingProducts = useGameStore((s) => s.pendingProducts);
   const { handleUnlockProduct } = useGameActions();
 
   const totalPassive = activeProducts.reduce((s, pid) => {
@@ -33,17 +34,19 @@ export default function ProdukTab() {
       <div style={{ fontSize: 10, color: "#a78bfa", fontWeight: 700, marginBottom: 6 }}>🏧 Layanan & Infrastruktur</div>
       {ALL_PRODUCTS.filter((p) => p.passiveIncome > 0 || p.payrollDeposit > 0).map((prod) => {
         const isActive = activeProducts.indexOf(prod.id) >= 0;
-        const canUnlock = !isActive && prod.fee > 0 && game.branch >= prod.unlockBranch && game.day >= prod.unlockDay;
-        const locked = !isActive && (game.branch < prod.unlockBranch || game.day < prod.unlockDay);
+        const pending = pendingProducts.find((pp) => pp.id === prod.id);
+        const canUnlock = !isActive && !pending && prod.fee > 0 && game.branch >= prod.unlockBranch && game.day >= prod.unlockDay;
+        const locked = !isActive && !pending && (game.branch < prod.unlockBranch || game.day < prod.unlockDay);
         const netIncome = (prod.passiveIncome || 0) - (prod.maintenanceCost || 0);
         return (
-          <div key={prod.id} style={{ background: isActive ? "#0d1a12" : "#0e0e18", border: `1px solid ${isActive ? "#22c55e33" : locked ? "#1a1a2e" : "#a78bfa33"}`, borderRadius: 11, padding: 12, marginBottom: 8 }}>
+          <div key={prod.id} style={{ background: isActive ? "#0d1a12" : pending ? "#1a1208" : "#0e0e18", border: `1px solid ${isActive ? "#22c55e33" : pending ? "#f59e0b33" : locked ? "#1a1a2e" : "#a78bfa33"}`, borderRadius: 11, padding: 12, marginBottom: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
                   <span style={{ fontSize: 18 }}>{prod.icon}</span>
                   <span style={{ fontWeight: 700, color: isActive ? "#ddd" : locked ? "#444" : "#bbb", fontSize: 13 }}>{prod.name}</span>
                   {isActive && <span style={{ fontSize: 9, background: "#22c55e22", color: "#22c55e", padding: "1px 5px", borderRadius: 3 }}>✓ Aktif</span>}
+                  {pending && <span style={{ fontSize: 9, background: "#f59e0b22", color: "#f59e0b", padding: "1px 5px", borderRadius: 3 }}>🛠️ Disiapkan, aktif {Math.max(0, pending.readyDay - game.day) > 0 ? "dalam " + Math.max(0, pending.readyDay - game.day) + " hari" : "besok"}</span>}
                   {locked && <span style={{ fontSize: 9, color: "#444" }}>🔒 {game.branch < prod.unlockBranch ? "Perlu " + BRANCHES[prod.unlockBranch].name : "Hari " + prod.unlockDay}</span>}
                 </div>
                 <div style={{ fontSize: 10, color: "#555", marginBottom: 4 }}>{prod.desc}</div>
@@ -68,16 +71,18 @@ export default function ProdukTab() {
       <div style={{ fontSize: 10, color: "#c8a96e", fontWeight: 700, marginBottom: 6, marginTop: 12 }}>📋 Produk Perbankan</div>
       {ALL_PRODUCTS.filter((p) => !p.passiveIncome && !p.payrollDeposit).map((prod) => {
         const isActive = activeProducts.indexOf(prod.id) >= 0;
-        const canUnlock = !isActive && prod.fee > 0 && game.branch >= prod.unlockBranch && game.day >= prod.unlockDay;
-        const locked = !isActive && (game.branch < prod.unlockBranch || game.day < prod.unlockDay);
+        const pending = pendingProducts.find((pp) => pp.id === prod.id);
+        const canUnlock = !isActive && !pending && prod.fee > 0 && game.branch >= prod.unlockBranch && game.day >= prod.unlockDay;
+        const locked = !isActive && !pending && (game.branch < prod.unlockBranch || game.day < prod.unlockDay);
         return (
-          <div key={prod.id} style={{ background: isActive ? "#0d1a0d" : "#0e0e18", border: `1px solid ${isActive ? "#22c55e33" : locked ? "#1a1a2e" : "#c8a96e33"}`, borderRadius: 11, padding: 12, marginBottom: 8 }}>
+          <div key={prod.id} style={{ background: isActive ? "#0d1a0d" : pending ? "#1a1208" : "#0e0e18", border: `1px solid ${isActive ? "#22c55e33" : pending ? "#f59e0b33" : locked ? "#1a1a2e" : "#c8a96e33"}`, borderRadius: 11, padding: 12, marginBottom: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
                   <span style={{ fontSize: 18 }}>{prod.icon}</span>
                   <span style={{ fontWeight: 700, color: isActive ? "#ddd" : locked ? "#444" : "#bbb", fontSize: 13 }}>{prod.name}</span>
                   {isActive && <span style={{ fontSize: 9, background: "#22c55e22", color: "#22c55e", padding: "1px 5px", borderRadius: 3 }}>✓ Aktif</span>}
+                  {pending && <span style={{ fontSize: 9, background: "#f59e0b22", color: "#f59e0b", padding: "1px 5px", borderRadius: 3 }}>🛠️ Disiapkan, aktif {Math.max(0, pending.readyDay - game.day) > 0 ? "dalam " + Math.max(0, pending.readyDay - game.day) + " hari" : "besok"}</span>}
                   {locked && <span style={{ fontSize: 9, color: "#444" }}>🔒 {game.branch < prod.unlockBranch ? "Perlu " + BRANCHES[prod.unlockBranch].name : "Hari " + prod.unlockDay}</span>}
                 </div>
                 <div style={{ fontSize: 10, color: "#555" }}>{prod.desc}</div>

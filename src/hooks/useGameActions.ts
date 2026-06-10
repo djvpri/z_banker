@@ -9,6 +9,7 @@ import { clamp, fmt, rnd, pick, M } from "@/lib/gameFormat";
 import {
   STAFF_ROLES, PROMO_PATHS, INVESTMENT_OPTIONS, BRANCHES,
   CITIES, ACQUISITION_TARGETS, ALL_PRODUCTS, STRESS_SCENARIOS, LPS_PREMIUM_RATE,
+  BRANCH_CONSTRUCTION_DAYS, PRODUCT_INSTALL_DAYS,
 } from "@/lib/gameConstants";
 
 const isDepositType = (type: string) => ["Deposito", "Buka Rekening", "Deposito Korporat"].indexOf(type) >= 0;
@@ -418,10 +419,12 @@ export function useGameActions() {
     if (game.branch < 2) { addNotif("❌ Perlu Kantor Pusat untuk ekspansi kota baru!", "danger"); return; }
     if (game.cash < city.cost) { addNotif("❌ Kas tidak cukup untuk buka cabang di " + city.name + "!", "danger"); return; }
     if (branches.find((b) => b.cityId === cityId)) { addNotif("❌ Cabang " + city.name + " sudah ada!", "danger"); return; }
-    const initDeposit = Math.floor(game.deposits * city.depBonus * 0.1);
-    setGame((g) => ({ ...g, cash: g.cash - city.cost, deposits: g.deposits + initDeposit, reputation: clamp(g.reputation + 8, 0, 100) }));
-    setBranches((b) => b.concat([{ cityId, openDay: game.day, deposits: initDeposit, loans: 0 }]));
-    addNotif("🎉 Cabang " + city.name + " berhasil dibuka! Ekspansi nasional dimulai.", "success");
+    setGame((g) => ({ ...g, cash: g.cash - city.cost }));
+    setBranches((b) => b.concat([{
+      cityId, openDay: game.day, activeDay: game.day + BRANCH_CONSTRUCTION_DAYS,
+      status: "building", deposits: 0, loans: 0,
+    }]));
+    addNotif("🏗️ Pembangunan cabang " + city.name + " dimulai! Akan aktif dalam " + BRANCH_CONSTRUCTION_DAYS + " hari.", "info");
   }, [addNotif]);
 
   const handleAcquire = useCallback((targetId: string) => {
@@ -507,16 +510,17 @@ export function useGameActions() {
   }, [addNotif]);
 
   const handleUnlockProduct = useCallback((productId: string) => {
-    const { game } = useGameStore.getState();
-    const { setGame, setActiveProducts } = useGameStore.getState();
+    const { game, activeProducts, pendingProducts } = useGameStore.getState();
+    const { setGame, setPendingProducts } = useGameStore.getState();
     const prod = ALL_PRODUCTS.find((p) => p.id === productId);
     if (!prod || prod.fee === 0) return;
+    if (activeProducts.indexOf(productId) >= 0 || pendingProducts.find((pp) => pp.id === productId)) return;
     if (game.cash < prod.fee) { addNotif("❌ Kas tidak cukup untuk unlock produk!", "danger"); return; }
     if (game.branch < prod.unlockBranch) { addNotif("❌ Perlu upgrade cabang lebih dulu!", "danger"); return; }
     if (game.day < prod.unlockDay) { addNotif("❌ Belum tersedia. Perlu hari ke-" + prod.unlockDay + ".", "danger"); return; }
     setGame((g) => ({ ...g, cash: g.cash - prod.fee }));
-    setActiveProducts((ap) => ap.concat([productId]));
-    addNotif("🎉 Produk " + prod.name + " berhasil diaktifkan!", "success");
+    setPendingProducts((pp) => pp.concat([{ id: productId, readyDay: game.day + PRODUCT_INSTALL_DAYS }]));
+    addNotif("🛠️ Produk " + prod.name + " sedang dipersiapkan, aktif dalam " + PRODUCT_INSTALL_DAYS + " hari.", "info");
   }, [addNotif]);
 
   const handleUpgradeBranch = useCallback(() => {

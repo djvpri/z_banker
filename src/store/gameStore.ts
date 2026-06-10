@@ -6,7 +6,7 @@ import {
   Prospect, Investment, CityBranch, CreditPipelineItem, WeeklyReport,
   EventLogEntry, Competitor, AnalyticsData, Difficulty, DIFFICULTY_CONFIG,
   Notif, Negotiation, FraudEvent, GameEvent, ReviewModalData, PredictiveWarning,
-  EarlyRepayRequest, EarlyRepayOffer,
+  EarlyRepayRequest, EarlyRepayOffer, PendingProduct,
 } from "@/types/game";
 import { STAFF_ROLES } from "@/lib/gameConstants";
 
@@ -88,6 +88,7 @@ interface GameStore {
   // Features
   investments: Investment[];
   activeProducts: string[];
+  pendingProducts: PendingProduct[];
   creditPipeline: CreditPipelineItem[];
   branches: CityBranch[];
   acquired: string[];
@@ -131,6 +132,7 @@ interface GameStore {
   setCompetitors: (updater: (c: Competitor[]) => Competitor[]) => void;
   setInvestments: (updater: (i: Investment[]) => Investment[]) => void;
   setActiveProducts: (updater: (ap: string[]) => string[]) => void;
+  setPendingProducts: (updater: (pp: PendingProduct[]) => PendingProduct[]) => void;
   setCreditPipeline: (updater: (cp: CreditPipelineItem[]) => CreditPipelineItem[]) => void;
   setBranches: (updater: (b: CityBranch[]) => CityBranch[]) => void;
   setAcquired: (updater: (a: string[]) => string[]) => void;
@@ -174,6 +176,7 @@ export const useGameStore = create<GameStore>()(
       competitors: [],
       investments: [],
       activeProducts: ["tabungan_reguler", "kpr"],
+      pendingProducts: [],
       creditPipeline: [],
       branches: [],
       acquired: [],
@@ -220,6 +223,7 @@ export const useGameStore = create<GameStore>()(
       setCompetitors: (updater) => set((s) => ({ competitors: updater(s.competitors) })),
       setInvestments: (updater) => set((s) => ({ investments: updater(s.investments) })),
       setActiveProducts: (updater) => set((s) => ({ activeProducts: updater(s.activeProducts) })),
+      setPendingProducts: (updater) => set((s) => ({ pendingProducts: updater(s.pendingProducts) })),
       setCreditPipeline: (updater) => set((s) => ({ creditPipeline: updater(s.creditPipeline) })),
       setBranches: (updater) => set((s) => ({ branches: updater(s.branches) })),
       setAcquired: (updater) => set((s) => ({ acquired: updater(s.acquired) })),
@@ -244,6 +248,7 @@ export const useGameStore = create<GameStore>()(
         savingsPortfolio: gs.savingsPortfolio ?? [],
         investments: gs.investments ?? [],
         activeProducts: gs.activeProducts ?? ["tabungan_reguler", "kpr"],
+        pendingProducts: gs.pendingProducts ?? [],
         branches: gs.branches ?? [],
         acquired: gs.acquired ?? [],
         lpsEnabled: gs.lpsEnabled ?? false,
@@ -291,6 +296,7 @@ export const useGameStore = create<GameStore>()(
         competitors: [],
         investments: [],
         activeProducts: ["tabungan_reguler", "kpr"],
+        pendingProducts: [],
         creditPipeline: [],
         branches: [],
         acquired: [],
@@ -323,6 +329,7 @@ export const useGameStore = create<GameStore>()(
         savingsPortfolio: state.savingsPortfolio,
         investments: state.investments,
         activeProducts: state.activeProducts,
+        pendingProducts: state.pendingProducts,
         branches: state.branches,
         acquired: state.acquired,
         lpsEnabled: state.lpsEnabled,

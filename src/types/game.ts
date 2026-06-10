@@ -102,8 +102,15 @@ export interface Investment {
 export interface CityBranch {
   cityId: string;
   openDay: number;
+  activeDay: number;
+  status: "building" | "aktif";
   deposits: number;
   loans: number;
+}
+
+export interface PendingProduct {
+  id: string;
+  readyDay: number;
 }
 
 export interface CreditPipelineItem {
