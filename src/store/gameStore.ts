@@ -265,6 +265,7 @@ export const useGameStore = create<GameStore>()(
           ...gs.game,
           econPhase: gs.game.econPhase ?? "normal",
           econPhaseUntil: gs.game.econPhaseUntil ?? (gs.game.day + 25),
+          scenarioId: gs.game.scenarioId ?? "normal",
         } : undefined,
         staff: gs.staff ?? undefined,
         rates: gs.rates ?? undefined,
@@ -371,6 +372,23 @@ export const useGameStore = create<GameStore>()(
         darkMode: state.darkMode,
         isMuted: state.isMuted,
       }),
+      // Save lama mungkin belum punya field game.econPhase/econPhaseUntil/scenarioId
+      // (ditambahkan di fitur-fitur belakangan) — isi default agar tidak crash saat rehydrate.
+      merge: (persisted, current) => {
+        const ps = persisted as Partial<GameStore> | undefined;
+        return {
+          ...current,
+          ...ps,
+          careerWins: ps?.careerWins ?? current.careerWins,
+          game: ps?.game ? {
+            ...current.game,
+            ...ps.game,
+            econPhase: ps.game.econPhase ?? "normal",
+            econPhaseUntil: ps.game.econPhaseUntil ?? (ps.game.day + 25),
+            scenarioId: ps.game.scenarioId ?? "normal",
+          } : current.game,
+        };
+      },
     }
   )
 );
