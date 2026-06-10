@@ -27,12 +27,31 @@ export default async function LeaderboardPage() {
     include: { user: { select: { name: true, email: true, image: true } } },
   });
 
+  // Aktif hari ini = GameSave yang ter-update sejak tengah malam WIB (UTC+7)
+  const WIB_OFFSET = 7 * 60 * 60 * 1000;
+  const wibNow = new Date(Date.now() + WIB_OFFSET);
+  const startOfTodayWIB = new Date(Date.UTC(wibNow.getUTCFullYear(), wibNow.getUTCMonth(), wibNow.getUTCDate()) - WIB_OFFSET);
+
+  const activeSaves = await prisma.gameSave.findMany({
+    where: { updatedAt: { gte: startOfTodayWIB } },
+    orderBy: { updatedAt: "desc" },
+    include: { user: { select: { name: true } } },
+  });
+  const seenUsers = new Set<string>();
+  const activeToday = activeSaves.filter((s) => {
+    if (seenUsers.has(s.userId)) return false;
+    seenUsers.add(s.userId);
+    return true;
+  }).slice(0, 20);
+
   return (
     <>
       <style>{`
         .lb-wrap { min-height:100vh; background:#080810; color:#e0e0e0; font-family:'Segoe UI',sans-serif; padding:24px 16px; max-width:720px; margin:0 auto; }
         .lb-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:28px; }
         .lb-legend { display:flex; gap:16px; margin-bottom:16px; font-size:10px; color:#555; background:#0e0e18; border-radius:10px; padding:8px 14px; border:1px solid #1a1a2e; flex-wrap:wrap; }
+        .lb-active-row { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+        .lb-active-card { flex-shrink:0; min-width:140px; max-width:160px; background:#0e0e18; border:1px solid #22c55e22; border-radius:10px; padding:8px 12px; }
 
         /* Desktop table */
         .lb-thead { display:grid; grid-template-columns:36px 1fr 130px 90px 54px 46px 58px; gap:6px; padding:8px 14px; background:#0d0d14; border-radius:10px 10px 0 0; border:1px solid #1a1a2e; border-bottom:none; font-size:9px; color:#555; text-transform:uppercase; letter-spacing:1px; }
@@ -72,6 +91,37 @@ export default async function LeaderboardPage() {
             </span>
           )}
         </div>
+
+        {/* Aktif hari ini */}
+        {activeToday.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+              Aktif Hari Ini ({activeToday.length})
+            </div>
+            <div className="lb-active-row">
+              {activeToday.map((s) => {
+                const gs = s.gameState as any;
+                const bankName = gs?.game?.bankName || "Bank Nusantara";
+                const dc = DIFF_COLOR[s.difficulty] || "#aaa";
+                return (
+                  <div key={s.id} className="lb-active-card">
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#ddd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {s.user?.name || "Pemain"}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#555", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      🏦 {bankName}
+                    </div>
+                    <div style={{ fontSize: 9, marginTop: 2, whiteSpace: "nowrap" }}>
+                      <span style={{ color: dc }}>{DIFF_LABEL[s.difficulty] || s.difficulty}</span>
+                      <span style={{ color: "#444" }}> · Hari {s.day} · Lv.{s.level}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Legend */}
         <div className="lb-legend">
