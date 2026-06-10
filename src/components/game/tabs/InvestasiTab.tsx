@@ -14,7 +14,7 @@ export default function InvestasiTab() {
   const { handleInvest, handleWithdrawInvest } = useGameActions();
 
   const [selInst, setSelInst] = useState("sbi");
-  const [selAmt, setSelAmt] = useState(50);
+  const [selAmt, setSelAmt] = useState("50");
   const opt = INVESTMENT_OPTIONS.find((o) => o.id === selInst) || INVESTMENT_OPTIONS[0];
   const totalInvested = investments.reduce((s, i) => s + i.amount, 0);
   const dailyReturn = investments.reduce((sum, inv) => {
@@ -40,7 +40,7 @@ export default function InvestasiTab() {
         <div style={{ fontSize: 11, fontWeight: 700, color: "#c8a96e", marginBottom: 10 }}>+ Investasi Baru</div>
         <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
           {INVESTMENT_OPTIONS.map((o) => (
-            <button key={o.id} onClick={() => { setSelInst(o.id); setSelAmt(o.minAmount / M); }}
+            <button key={o.id} onClick={() => { setSelInst(o.id); setSelAmt(String(o.minAmount / M)); }}
               style={{ background: selInst === o.id ? "#c8a96e22" : "#0d0d14", border: `1px solid ${selInst === o.id ? "#c8a96e55" : "#222"}`, color: selInst === o.id ? "#c8a96e" : "#666", borderRadius: 7, padding: "6px 10px", cursor: "pointer", fontSize: 11 }}>
               {o.icon} {o.name} <span style={{ color: riskColor(o.risk), fontSize: 9 }}>({o.rateAnnual}%)</span>
             </button>
@@ -51,10 +51,10 @@ export default function InvestasiTab() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <input type="number" value={selAmt} min={opt.minAmount / M} step={25}
-            onChange={(e) => setSelAmt(parseInt(e.target.value) || 0)}
+            onChange={(e) => setSelAmt(e.target.value)}
             style={{ flex: 1, background: "#0d0d14", border: "1px solid #2a2a3a", color: "#ddd", borderRadius: 6, padding: "6px 10px", fontSize: 12 }} />
           <span style={{ color: "#555", fontSize: 11 }}>jt</span>
-          <button onClick={() => handleInvest(selInst, selAmt * M)}
+          <button onClick={() => handleInvest(selInst, (parseInt(selAmt) || 0) * M)}
             style={{ background: "linear-gradient(135deg,#c8a96e,#8a6030)", color: "#000", border: "none", borderRadius: 7, padding: "7px 14px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
             Investasi
           </button>

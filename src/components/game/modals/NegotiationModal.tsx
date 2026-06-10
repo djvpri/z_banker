@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function NegotiationModal({ negotiation, loanRate, onAccept, onReject, onCounter }: Props) {
-  const [counterInput, setCounterInput] = useState(parseFloat((loanRate - 0.5).toFixed(1)));
+  const [counterInput, setCounterInput] = useState<number | "">(parseFloat((loanRate - 0.5).toFixed(1)));
   const c = negotiation.customer;
   const offered = negotiation.proposedRate;
   const round = (c.negotiationRound || 0) + 1;
@@ -52,11 +52,11 @@ export default function NegotiationModal({ negotiation, loanRate, onAccept, onRe
                 min={offered}
                 max={loanRate}
                 step={0.5}
-                onChange={(e) => setCounterInput(parseFloat(e.target.value) || offered)}
+                onChange={(e) => { const v = e.target.value; setCounterInput(v === "" ? "" : parseFloat(v) || offered); }}
                 style={{ flex: 1, background: "#0d0d14", border: "1px solid #2a2a3a", color: "#ddd", borderRadius: 6, padding: "5px 8px", fontSize: 12 }}
               />
               <span style={{ color: "#555", fontSize: 11 }}>%</span>
-              <button onClick={() => onCounter(counterInput)} style={{ background: "#60a5fa22", border: "1px solid #60a5fa44", color: "#60a5fa", borderRadius: 6, padding: "6px 12px", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>
+              <button onClick={() => onCounter(counterInput || offered)} style={{ background: "#60a5fa22", border: "1px solid #60a5fa44", color: "#60a5fa", borderRadius: 6, padding: "6px 12px", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>
                 Tawar
               </button>
             </div>

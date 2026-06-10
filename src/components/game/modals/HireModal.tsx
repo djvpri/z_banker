@@ -30,7 +30,7 @@ export default function HireModal({ onHire, onClose, cash }: Props) {
     return result;
   });
   const [selected, setSelected] = useState<Candidate | null>(null);
-  const [offer, setOffer] = useState(0);
+  const [offer, setOffer] = useState<number | "">(0);
   const [attempts, setAttempts] = useState<Record<number, number>>({});
   const [negMsg, setNegMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -54,9 +54,10 @@ export default function HireModal({ onHire, onClose, cash }: Props) {
 
   const handleOffer = () => {
     if (!selected) return;
-    const chance = negChance(offer, selected.expectedSalary, selected.loyalty);
+    const offerVal = offer || 0;
+    const chance = negChance(offerVal, selected.expectedSalary, selected.loyalty);
     if (Math.random() < chance) {
-      onHire(selected, offer);
+      onHire(selected, offerVal);
       return;
     }
     const newAttempts = (attempts[selected.id] || 0) + 1;
@@ -69,7 +70,7 @@ export default function HireModal({ onHire, onClose, cash }: Props) {
       setSelected(null);
       setNegMsg(null);
     } else {
-      setNegMsg({ text: "❌ " + selected.name + " menolak " + fmt(offer) + "/hari. Coba naikkan tawaran.", ok: false });
+      setNegMsg({ text: "❌ " + selected.name + " menolak " + fmt(offerVal) + "/hari. Coba naikkan tawaran.", ok: false });
     }
   };
 
@@ -151,7 +152,7 @@ export default function HireModal({ onHire, onClose, cash }: Props) {
                   value={offer}
                   step={1000}
                   min={Math.round(selected.expectedSalary * 0.5)}
-                  onChange={(e) => setOffer(parseInt(e.target.value) || 0)}
+                  onChange={(e) => { const v = e.target.value; setOffer(v === "" ? "" : parseInt(v) || 0); }}
                   style={{ flex: 1, background: "#0d0d14", border: "1px solid #2a2a3a", color: "#ddd", borderRadius: 6, padding: "5px 8px", fontSize: 12 }}
                 />
                 <span style={{ color: "#555", fontSize: 11 }}>/hari</span>
