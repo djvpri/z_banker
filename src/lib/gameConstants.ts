@@ -72,6 +72,17 @@ export function getCompetitionAggression(day: number, econPhase: EconPhase): num
   return clamp(1 + day / 150 + ECONOMIC_PHASES[econPhase].aggressionBias, 0.6, 2.5);
 }
 
+// Target KPI OJK kuartalan: makin ketat seiring kuartal berjalan
+export function getQuarterlyKpiTargets(quarter: number) {
+  return {
+    car: Math.min(16, 12 + (quarter - 1) * 0.5),
+    npl: Math.max(3, 5 - (quarter - 1) * 0.2),
+    ldrMin: 78,
+    ldrMax: 92,
+    reputation: Math.min(70, 50 + (quarter - 1) * 1),
+  };
+}
+
 export const LPS_PREMIUM_RATE = 0.002; // 0.2% per tahun dari simpanan dijamin
 export const LPS_MAX_COVERAGE = 2 * B; // Rp2 Miliar per nasabah
 

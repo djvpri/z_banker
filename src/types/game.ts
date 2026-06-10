@@ -140,6 +140,22 @@ export interface WeeklyReport {
   rating: "Sehat" | "Cukup" | "Waspada";
 }
 
+export interface QuarterlyKpiItem {
+  label: string;
+  value: number;
+  targetLabel: string;
+  pass: boolean;
+}
+
+export interface QuarterlyKpiResult {
+  quarter: number;
+  day: number;
+  items: QuarterlyKpiItem[];
+  passedCount: number;
+  rating: "Sehat" | "Cukup" | "Pengawasan" | "Sanksi";
+  consequence: string;
+}
+
 export interface Notif {
   id: number;
   msg: string;

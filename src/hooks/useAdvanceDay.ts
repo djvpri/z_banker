@@ -10,12 +10,12 @@ import { clamp, rnd, pick, fmt, M, B } from "@/lib/gameFormat";
 import {
   STAFF_ROLES, BRANCHES, ALL_PRODUCTS, EVENTS, ACHIEVEMENTS,
   INVESTMENT_OPTIONS, LPS_PREMIUM_RATE, LPS_MAX_COVERAGE, CITIES,
-  ECONOMIC_PHASES, ECON_NEXT_PHASE, getCompetitionAggression,
+  ECONOMIC_PHASES, ECON_NEXT_PHASE, getCompetitionAggression, getQuarterlyKpiTargets,
 } from "@/lib/gameConstants";
 import { genProspect, genLoanCustomer, genCompetitor } from "@/lib/gameGenerators";
 import { applyEvent } from "@/lib/applyEvent";
 import { checkAchievement } from "@/lib/achievementChecks";
-import { GameState, ReviewResult, WeeklyReport, PredictiveWarning, EventLogEntry, StaffRole, LoanStatus } from "@/types/game";
+import { GameState, ReviewResult, WeeklyReport, QuarterlyKpiItem, QuarterlyKpiResult, PredictiveWarning, EventLogEntry, StaffRole, LoanStatus } from "@/types/game";
 
 export function useAdvanceDay() {
   const addNotif = useGameStore((s) => s.addNotif);
@@ -28,7 +28,7 @@ export function useAdvanceDay() {
     } = useGameStore.getState();
     const {
       setStaff, setLoanPortfolio, setCreditPipeline, setSavingsPortfolio, setGame,
-      setProfitHistory, setWeeklyReports, setShowWeeklyReport, setAchievements,
+      setProfitHistory, setWeeklyReports, setShowWeeklyReport, setQuarterlyReports, setShowQuarterlyReport, setAchievements,
       setPredictiveWarnings, setReviewModal, setCompetitors, setCustomers,
       setEventLog, setActiveEvent, setFraudEvent, setProspects, setAnalyticsData,
       setEarlyRepayRequests, setEarlyRepayOffers, setBranches, setActiveProducts, setPendingProducts,
@@ -396,6 +396,46 @@ export function useAdvanceDay() {
         weeklySnapshotRef.current = { totalProfit: newTP, npl: newNpl, reputation: newRep, deposits: prev.deposits };
         setWeeklyReports((wr) => [report].concat(wr).slice(0, 12));
         setShowWeeklyReport(report);
+      }
+
+      // ── Quarterly OJK KPI evaluation every 90 days ──────────────────────────
+      if (prev.day > 0 && prev.day % 90 === 0) {
+        const quarter = prev.day / 90;
+        const t = getQuarterlyKpiTargets(quarter);
+        const items: QuarterlyKpiItem[] = [
+          { label: "CAR", value: nextState.car, targetLabel: `≥ ${t.car}%`, pass: nextState.car >= t.car },
+          { label: "NPL", value: nextState.npl, targetLabel: `≤ ${t.npl}%`, pass: nextState.npl <= t.npl },
+          { label: "LDR", value: nextState.ldr, targetLabel: `${t.ldrMin}-${t.ldrMax}%`, pass: nextState.ldr >= t.ldrMin && nextState.ldr <= t.ldrMax },
+          { label: "Reputasi", value: nextState.reputation, targetLabel: `≥ ${t.reputation}%`, pass: nextState.reputation >= t.reputation },
+        ];
+        const passedCount = items.filter((i) => i.pass).length;
+        let rating: QuarterlyKpiResult["rating"];
+        let consequence: string;
+        if (passedCount === 4) {
+          rating = "Sehat";
+          nextState.reputation = clamp(nextState.reputation + 5, 0, 100);
+          nextState.cash += 50 * M;
+          consequence = "Insentif OJK: Reputasi +5, Kas +Rp50jt";
+        } else if (passedCount === 3) {
+          rating = "Cukup";
+          consequence = "Tidak ada sanksi, namun perhatikan rasio yang belum tercapai.";
+        } else if (passedCount === 2) {
+          rating = "Pengawasan";
+          nextState.reputation = clamp(nextState.reputation - 5, 0, 100);
+          consequence = "Status Pengawasan Khusus OJK: Reputasi -5";
+        } else {
+          rating = "Sanksi";
+          const denda = Math.floor(nextState.cash * 0.02);
+          nextState.reputation = clamp(nextState.reputation - 12, 0, 100);
+          nextState.cash = Math.max(0, nextState.cash - denda);
+          nextState.car = clamp(nextState.car - 1, 8, 30);
+          consequence = "Sanksi OJK: Reputasi -12, Denda " + fmt(denda) + ", CAR -1";
+        }
+        const result: QuarterlyKpiResult = { quarter, day: prev.day, items, passedCount, rating, consequence };
+        setQuarterlyReports((qr) => [result].concat(qr).slice(0, 12));
+        setShowQuarterlyReport(result);
+        addNotif("🏛️ Evaluasi OJK Kuartal " + quarter + ": " + rating + " (" + passedCount + "/4 KPI tercapai)",
+          rating === "Sehat" ? "success" : rating === "Cukup" ? "info" : "danger");
       }
 
       // ── Achievement check ──────────────────────────────────────────────────

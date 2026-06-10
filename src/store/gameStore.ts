@@ -6,7 +6,7 @@ import {
   Prospect, Investment, CityBranch, CreditPipelineItem, WeeklyReport,
   EventLogEntry, Competitor, AnalyticsData, Difficulty, DIFFICULTY_CONFIG,
   Notif, Negotiation, FraudEvent, GameEvent, ReviewModalData, PredictiveWarning,
-  EarlyRepayRequest, EarlyRepayOffer, PendingProduct,
+  EarlyRepayRequest, EarlyRepayOffer, PendingProduct, QuarterlyKpiResult,
 } from "@/types/game";
 import { STAFF_ROLES } from "@/lib/gameConstants";
 
@@ -82,6 +82,7 @@ interface GameStore {
   earlyRepayOffers: EarlyRepayOffer[];
   showHire: boolean;
   showWeeklyReport: WeeklyReport | null;
+  showQuarterlyReport: QuarterlyKpiResult | null;
   activeEvent: GameEvent | null;
   reviewModal: ReviewModalData | null;
   predictiveWarnings: PredictiveWarning[];
@@ -101,6 +102,7 @@ interface GameStore {
   // Reports & analytics
   profitHistory: Array<{ day: number; profit: number }>;
   weeklyReports: WeeklyReport[];
+  quarterlyReports: QuarterlyKpiResult[];
   eventLog: EventLogEntry[];
   analyticsData: AnalyticsData;
 
@@ -123,6 +125,7 @@ interface GameStore {
   setEarlyRepayOffers: (updater: (o: EarlyRepayOffer[]) => EarlyRepayOffer[]) => void;
   setShowHire: (v: boolean) => void;
   setShowWeeklyReport: (r: WeeklyReport | null) => void;
+  setShowQuarterlyReport: (r: QuarterlyKpiResult | null) => void;
   setActiveEvent: (e: GameEvent | null) => void;
   setReviewModal: (r: ReviewModalData | null) => void;
   setPredictiveWarnings: (w: PredictiveWarning[]) => void;
@@ -143,6 +146,7 @@ interface GameStore {
   setAchievements: (updater: (a: string[]) => string[]) => void;
   setProfitHistory: (updater: (h: any[]) => any[]) => void;
   setWeeklyReports: (updater: (wr: WeeklyReport[]) => WeeklyReport[]) => void;
+  setQuarterlyReports: (updater: (qr: QuarterlyKpiResult[]) => QuarterlyKpiResult[]) => void;
   setEventLog: (updater: (el: EventLogEntry[]) => EventLogEntry[]) => void;
   setAnalyticsData: (updater: (a: AnalyticsData) => AnalyticsData) => void;
   setActiveTab: (tab: string) => void;
@@ -167,6 +171,7 @@ export const useGameStore = create<GameStore>()(
       earlyRepayOffers: [],
       showHire: false,
       showWeeklyReport: null,
+      showQuarterlyReport: null,
       activeEvent: null,
       reviewModal: null,
       predictiveWarnings: [],
@@ -187,6 +192,7 @@ export const useGameStore = create<GameStore>()(
       achievements: [],
       profitHistory: [{ day: 1, profit: 0 }],
       weeklyReports: [],
+      quarterlyReports: [],
       eventLog: [],
       analyticsData: {
         segmentHistory: [], nplForecast: [],
@@ -214,6 +220,7 @@ export const useGameStore = create<GameStore>()(
       setEarlyRepayOffers: (updater) => set((s) => ({ earlyRepayOffers: updater(s.earlyRepayOffers) })),
       setShowHire: (v) => set({ showHire: v }),
       setShowWeeklyReport: (r) => set({ showWeeklyReport: r }),
+      setShowQuarterlyReport: (r) => set({ showQuarterlyReport: r }),
       setActiveEvent: (e) => set({ activeEvent: e }),
       setReviewModal: (r) => set({ reviewModal: r }),
       setPredictiveWarnings: (w) => set({ predictiveWarnings: w }),
@@ -234,6 +241,7 @@ export const useGameStore = create<GameStore>()(
       setAchievements: (updater) => set((s) => ({ achievements: updater(s.achievements) })),
       setProfitHistory: (updater) => set((s) => ({ profitHistory: updater(s.profitHistory) })),
       setWeeklyReports: (updater) => set((s) => ({ weeklyReports: updater(s.weeklyReports) })),
+      setQuarterlyReports: (updater) => set((s) => ({ quarterlyReports: updater(s.quarterlyReports) })),
       setEventLog: (updater) => set((s) => ({ eventLog: updater(s.eventLog) })),
       setAnalyticsData: (updater) => set((s) => ({ analyticsData: updater(s.analyticsData) })),
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -260,6 +268,7 @@ export const useGameStore = create<GameStore>()(
         achievements: gs.achievements ?? [],
         profitHistory: gs.profitHistory ?? [],
         weeklyReports: gs.weeklyReports ?? [],
+        quarterlyReports: gs.quarterlyReports ?? [],
         eventLog: gs.eventLog ?? [],
         competitors: gs.competitors ?? [],
         notifs: [],
@@ -269,6 +278,7 @@ export const useGameStore = create<GameStore>()(
         earlyRepayOffers: [],
         showHire: false,
         showWeeklyReport: null,
+        showQuarterlyReport: null,
         activeEvent: null,
         reviewModal: null,
         predictiveWarnings: [],
@@ -291,6 +301,7 @@ export const useGameStore = create<GameStore>()(
         earlyRepayOffers: [],
         showHire: false,
         showWeeklyReport: null,
+        showQuarterlyReport: null,
         activeEvent: null,
         reviewModal: null,
         predictiveWarnings: [],
@@ -311,6 +322,7 @@ export const useGameStore = create<GameStore>()(
         achievements: [],
         profitHistory: [{ day: 1, profit: 0 }],
         weeklyReports: [],
+        quarterlyReports: [],
         eventLog: [],
         analyticsData: {
           segmentHistory: [], nplForecast: [],
@@ -341,6 +353,7 @@ export const useGameStore = create<GameStore>()(
         achievements: state.achievements,
         profitHistory: state.profitHistory,
         weeklyReports: state.weeklyReports,
+        quarterlyReports: state.quarterlyReports,
         eventLog: state.eventLog,
         darkMode: state.darkMode,
         isMuted: state.isMuted,

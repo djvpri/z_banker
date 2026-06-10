@@ -3,16 +3,21 @@
 import { useGameStore } from "@/store/gameStore";
 import { fmt } from "@/lib/gameFormat";
 import WeeklyReportModal from "../modals/WeeklyReportModal";
+import QuarterlyReportModal from "../modals/QuarterlyReportModal";
 
 export default function LaporanTab() {
   const weeklyReports = useGameStore((s) => s.weeklyReports);
+  const quarterlyReports = useGameStore((s) => s.quarterlyReports);
   const eventLog = useGameStore((s) => s.eventLog);
   const showWeeklyReport = useGameStore((s) => s.showWeeklyReport);
   const setShowWeeklyReport = useGameStore((s) => s.setShowWeeklyReport);
+  const showQuarterlyReport = useGameStore((s) => s.showQuarterlyReport);
+  const setShowQuarterlyReport = useGameStore((s) => s.setShowQuarterlyReport);
 
   return (
     <div>
       {showWeeklyReport && <WeeklyReportModal report={showWeeklyReport} onClose={() => setShowWeeklyReport(null)} />}
+      {showQuarterlyReport && <QuarterlyReportModal report={showQuarterlyReport} onClose={() => setShowQuarterlyReport(null)} />}
 
       <div style={{ fontSize: 13, fontWeight: 700, color: "#c8a96e", marginBottom: 12 }}>📋 Laporan Mingguan & Log Event</div>
 
@@ -34,6 +39,29 @@ export default function LaporanTab() {
               <span style={{ color: r.profit >= 0 ? "#22c55e" : "#ef4444" }}>{r.profit >= 0 ? "+" : ""}{fmt(r.profit)}</span>
               <span style={{ color: "#555" }}>NPL {r.npl}%</span>
               <span style={{ color: "#555" }}>Rep {r.reputation}%</span>
+            </div>
+            <div style={{ fontSize: 9, color: "#444", marginTop: 4 }}>Tap untuk detail lengkap →</div>
+          </div>
+        );
+      })}
+
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#c8a96e", margin: "14px 0 8px" }}>🏛️ Evaluasi OJK Kuartalan</div>
+      {quarterlyReports.length === 0 && (
+        <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 10, padding: 20, textAlign: "center", color: "#555", marginBottom: 12 }}>
+          Evaluasi kuartalan pertama muncul di hari ke-90.
+        </div>
+      )}
+      {quarterlyReports.map((r) => {
+        const ratingColor = r.rating === "Sehat" ? "#22c55e" : r.rating === "Cukup" ? "#60a5fa" : r.rating === "Pengawasan" ? "#f59e0b" : "#ef4444";
+        const ratingIcon = r.rating === "Sehat" ? "✅" : r.rating === "Cukup" ? "🔵" : r.rating === "Pengawasan" ? "⚠️" : "🚨";
+        return (
+          <div key={r.quarter} style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 10, padding: 12, marginBottom: 8, cursor: "pointer" }} onClick={() => setShowQuarterlyReport(r)}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div style={{ fontWeight: 700, color: "#ddd", fontSize: 12 }}>Kuartal ke-{r.quarter} <span style={{ fontSize: 10, color: "#555" }}>(Hari {r.day})</span></div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: ratingColor }}>{ratingIcon} {r.rating}</div>
+            </div>
+            <div style={{ display: "flex", gap: 12, fontSize: 11, color: "#555" }}>
+              <span>{r.passedCount}/4 KPI tercapai</span>
             </div>
             <div style={{ fontSize: 9, color: "#444", marginTop: 4 }}>Tap untuk detail lengkap →</div>
           </div>

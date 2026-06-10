@@ -2,7 +2,7 @@
 "use client";
 import { useGameStore } from "@/store/gameStore";
 import { useGameActions } from "@/hooks/useGameActions";
-import { STRESS_SCENARIOS, LPS_PREMIUM_RATE } from "@/lib/gameConstants";
+import { STRESS_SCENARIOS, LPS_PREMIUM_RATE, getQuarterlyKpiTargets } from "@/lib/gameConstants";
 import { fmt } from "@/lib/gameFormat";
 
 export default function RegulasiTab() {
@@ -12,9 +12,32 @@ export default function RegulasiTab() {
   const stressResult = useGameStore((s) => s.stressResult);
   const { handleToggleLps, handleBmpkCheck, handleStressTest } = useGameActions();
 
+  const quarter = Math.floor(game.day / 90) + 1;
+  const kpiTarget = getQuarterlyKpiTargets(quarter);
+  const daysLeft = 90 - (game.day % 90);
+  const kpiRows = [
+    { label: "CAR", value: game.car, targetLabel: `≥ ${kpiTarget.car}%`, pass: game.car >= kpiTarget.car },
+    { label: "NPL", value: game.npl, targetLabel: `≤ ${kpiTarget.npl}%`, pass: game.npl <= kpiTarget.npl },
+    { label: "LDR", value: game.ldr, targetLabel: `${kpiTarget.ldrMin}-${kpiTarget.ldrMax}%`, pass: game.ldr >= kpiTarget.ldrMin && game.ldr <= kpiTarget.ldrMax },
+    { label: "Reputasi", value: game.reputation, targetLabel: `≥ ${kpiTarget.reputation}%`, pass: game.reputation >= kpiTarget.reputation },
+  ];
+
   return (
     <div>
       <div style={{ fontSize: 13, fontWeight: 700, color: "#c8a96e", marginBottom: 14 }}>⚖️ Risiko & Regulasi</div>
+
+      <div style={{ background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: 12, padding: 14, marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, color: "#ddd", fontSize: 13, marginBottom: 4 }}>🎯 Target KPI OJK Kuartal Ini</div>
+        <div style={{ fontSize: 10, color: "#555", marginBottom: 10 }}>Kuartal ke-{quarter} · Evaluasi dalam {daysLeft} hari</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+          {kpiRows.map((row) => (
+            <div key={row.label} style={{ background: "#0d0d14", borderRadius: 6, padding: "6px 9px" }}>
+              <div style={{ fontSize: 9, color: "#555" }}>{row.label} (target {row.targetLabel})</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: row.pass ? "#22c55e" : "#ef4444", fontFamily: "monospace" }}>{row.value}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div style={{ background: "#0e0e18", border: `1px solid ${lpsEnabled ? "#22c55e44" : "#1a1a2e"}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>

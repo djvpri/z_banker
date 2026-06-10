@@ -21,6 +21,7 @@ import NegotiationModal from "./modals/NegotiationModal";
 import ActiveEventModal from "./modals/ActiveEventModal";
 import ReviewModal from "./modals/ReviewModal";
 import WeeklyReportModal from "./modals/WeeklyReportModal";
+import QuarterlyReportModal from "./modals/QuarterlyReportModal";
 import Link from "next/link";
 
 interface Props {
@@ -51,6 +52,8 @@ export default function GameShell({ user }: Props) {
   const setReviewModal = useGameStore((s) => s.setReviewModal);
   const showWeeklyReport = useGameStore((s) => s.showWeeklyReport);
   const setShowWeeklyReport = useGameStore((s) => s.setShowWeeklyReport);
+  const showQuarterlyReport = useGameStore((s) => s.showQuarterlyReport);
+  const setShowQuarterlyReport = useGameStore((s) => s.setShowQuarterlyReport);
   const fraudEvent = useGameStore((s) => s.fraudEvent);
   const negotiation = useGameStore((s) => s.negotiation);
   const showHire = useGameStore((s) => s.showHire);
@@ -204,6 +207,9 @@ export default function GameShell({ user }: Props) {
       )}
       {showWeeklyReport && (
         <WeeklyReportModal report={showWeeklyReport} onClose={() => setShowWeeklyReport(null)} />
+      )}
+      {showQuarterlyReport && (
+        <QuarterlyReportModal report={showQuarterlyReport} onClose={() => setShowQuarterlyReport(null)} />
       )}
 
       {/* ── Game Over / Game Won end screen ── */}
