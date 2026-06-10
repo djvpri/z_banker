@@ -288,7 +288,7 @@ export function useGameActions() {
     const opt = INVESTMENT_OPTIONS.find((o) => o.id === instrumentId);
     if (!opt) return;
     if (!amount || amount < opt.minAmount) { addNotif("❌ Minimal investasi " + fmt(opt.minAmount), "danger"); return; }
-    if (game.cash < amount) { addNotif("❌ Kas tidak cukup!", "danger"); return; }
+    if (game.cash < amount) { addNotif("❌ Kas tidak cukup! Butuh " + fmt(amount) + ", kas tersedia " + fmt(game.cash), "danger"); return; }
     setGame((g) => ({ ...g, cash: g.cash - amount }));
     setInvestments((inv) => inv.concat([{ id: String(Date.now()), instrument: instrumentId, amount, startDay: game.day }]));
     addNotif("📈 Investasi " + fmt(amount) + " ke " + opt.name + " berhasil!", "success");

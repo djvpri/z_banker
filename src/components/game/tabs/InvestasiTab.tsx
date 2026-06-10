@@ -46,11 +46,14 @@ export default function InvestasiTab() {
             </button>
           ))}
         </div>
-        <div style={{ fontSize: 10, color: "#777", marginBottom: 8 }}>
+        <div style={{ fontSize: 10, color: "#777", marginBottom: 4 }}>
           {opt.desc} · Min {fmt(opt.minAmount)} · Risiko: <span style={{ color: riskColor(opt.risk) }}>{opt.risk === "low" ? "Rendah" : opt.risk === "medium" ? "Sedang" : "Tinggi"}</span>
         </div>
+        <div style={{ fontSize: 10, color: "#444", marginBottom: 8 }}>
+          Kas tersedia: <span style={{ color: "#c8a96e" }}>{fmt(game.cash)}</span> · Masukkan nilai dalam <strong>jt (juta)</strong>, mis. 50 = Rp50jt
+        </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input type="number" value={selAmt} min={opt.minAmount / M} step={25}
+          <input type="number" value={selAmt} min={opt.minAmount / M} max={Math.floor(game.cash / M)} step={25}
             onChange={(e) => setSelAmt(e.target.value)}
             style={{ flex: 1, background: "#0d0d14", border: "1px solid #2a2a3a", color: "#ddd", borderRadius: 6, padding: "6px 10px", fontSize: 12 }} />
           <span style={{ color: "#555", fontSize: 11 }}>jt</span>
