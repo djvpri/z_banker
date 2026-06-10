@@ -14,7 +14,7 @@ export default function DifficultyModal({ onStart }: Props) {
 
   return (
     <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 300,
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 310,
       display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
     }}>
       <motion.div
